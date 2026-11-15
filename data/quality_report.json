@@ -1,0 +1,414 @@
+{
+  "generado_en": "2026-11-01T04:15:13+00:00",
+  "archivo": {
+    "nombre": "netflix_titles.csv",
+    "bytes": 3399671,
+    "sha256": "df1f4ad2027a5a14c3a33932ef0d4054565ff88adf92b7f263601b70fdc6f3f3"
+  },
+  "snapshot": {
+    "corte": "2021-09-25",
+    "min_date_added": "2008-01-01",
+    "max_date_added": "2021-09-25",
+    "fechas_distintas": 1714,
+    "nota": "El snapshot de Kaggle termina el 25 de septiembre de 2021. 2021 está incompleto y no debe compararse como año cerrado."
+  },
+  "totales": {
+    "filas": 8807,
+    "titulos_unicos": 8807,
+    "columnas": 12,
+    "peliculas": 6131,
+    "series": 2676,
+    "porcentaje_series": 30.38,
+    "muestreo": "100% del catálogo; no se aplicó muestreo"
+  },
+  "duplicados": {
+    "show_id": 0,
+    "filas_completas": 0
+  },
+  "campos": [
+    {
+      "campo": "show_id",
+      "tipo": "identificador",
+      "nulos": 0,
+      "porcentaje_nulos": 0.0,
+      "valores_distintos": 8807,
+      "nota": null
+    },
+    {
+      "campo": "type",
+      "tipo": "tipo",
+      "nulos": 0,
+      "porcentaje_nulos": 0.0,
+      "valores_distintos": 2,
+      "nota": null
+    },
+    {
+      "campo": "title",
+      "tipo": "texto",
+      "nulos": 0,
+      "porcentaje_nulos": 0.0,
+      "valores_distintos": 8806,
+      "nota": "El título 'Consequences' aparece dos veces con show_id distinto; no es un duplicado."
+    },
+    {
+      "campo": "director",
+      "tipo": "multivaluado",
+      "nulos": 2634,
+      "porcentaje_nulos": 29.91,
+      "valores_distintos": 4528,
+      "nota": "Valores distintos sobre el texto original; al separar por comas resultan 4,993 nombres."
+    },
+    {
+      "campo": "cast",
+      "tipo": "multivaluado",
+      "nulos": 825,
+      "porcentaje_nulos": 9.37,
+      "valores_distintos": 7692,
+      "nota": null
+    },
+    {
+      "campo": "country",
+      "tipo": "multivaluado",
+      "nulos": 831,
+      "porcentaje_nulos": 9.44,
+      "valores_distintos": 748,
+      "nota": "Valores distintos sobre el texto original; tras separar, limpiar y agrupar países históricos quedan 119 países."
+    },
+    {
+      "campo": "date_added",
+      "tipo": "fecha",
+      "nulos": 10,
+      "porcentaje_nulos": 0.11,
+      "valores_distintos": 1714,
+      "nota": null
+    },
+    {
+      "campo": "release_year",
+      "tipo": "entero",
+      "nulos": 0,
+      "porcentaje_nulos": 0.0,
+      "valores_distintos": 74,
+      "nota": null
+    },
+    {
+      "campo": "rating",
+      "tipo": "categórico",
+      "nulos": 7,
+      "porcentaje_nulos": 0.08,
+      "valores_distintos": 14,
+      "nota": "7 títulos sin rating tras corregir 3 filas desalineadas (la duración estaba en rating)."
+    },
+    {
+      "campo": "duration",
+      "tipo": "texto",
+      "nulos": 3,
+      "porcentaje_nulos": 0.03,
+      "valores_distintos": 220,
+      "nota": "3 nulos en el texto original; sus minutos se recuperaron desde el campo rating. Tras la corrección, 0 títulos quedan sin duración."
+    },
+    {
+      "campo": "listed_in",
+      "tipo": "multivaluado",
+      "nulos": 0,
+      "porcentaje_nulos": 0.0,
+      "valores_distintos": 514,
+      "nota": null
+    },
+    {
+      "campo": "description",
+      "tipo": "texto",
+      "nulos": 0,
+      "porcentaje_nulos": 0.0,
+      "valores_distintos": 8775,
+      "nota": null
+    }
+  ],
+  "cobertura": {
+    "release_year_min": 1925,
+    "release_year_max": 2021,
+    "anios_con_titulos": 74,
+    "anios_sin_titulos": [
+      1926,
+      1927,
+      1928,
+      1929,
+      1930,
+      1931,
+      1932,
+      1933,
+      1934,
+      1935,
+      1936,
+      1937,
+      1938,
+      1939,
+      1940,
+      1941,
+      1948,
+      1949,
+      1950,
+      1951,
+      1952,
+      1953,
+      1957
+    ],
+    "nota": "Los años sin títulos se muestran en 0; no se interpola ni se extrapola.",
+    "paises_distintos": 119,
+    "generos_distintos": 42,
+    "directores_distintos": 4993,
+    "titulos_sin_pais": 831,
+    "titulos_sin_director": 2634,
+    "porcentaje_sin_director": 29.91
+  },
+  "anomalias": {
+    "rating_con_duracion": [
+      {
+        "show_id": "s5542",
+        "title": "Louis C.K. 2017",
+        "rating_was_duration": true,
+        "duration_min": 74
+      },
+      {
+        "show_id": "s5795",
+        "title": "Louis C.K.: Hilarious",
+        "rating_was_duration": true,
+        "duration_min": 84
+      },
+      {
+        "show_id": "s5814",
+        "title": "Louis C.K.: Live at the Comedy Store",
+        "rating_was_duration": true,
+        "duration_min": 66
+      }
+    ],
+    "date_added_antes_de_release_year": [
+      {
+        "show_id": "s1552",
+        "title": "Hilda",
+        "release_year": 2021,
+        "added_date": "2020-12-14"
+      },
+      {
+        "show_id": "s1697",
+        "title": "Polly Pocket",
+        "release_year": 2021,
+        "added_date": "2020-11-15"
+      },
+      {
+        "show_id": "s2921",
+        "title": "Love Is Blind",
+        "release_year": 2021,
+        "added_date": "2020-02-13"
+      },
+      {
+        "show_id": "s3169",
+        "title": "Fuller House",
+        "release_year": 2020,
+        "added_date": "2019-12-06"
+      },
+      {
+        "show_id": "s3288",
+        "title": "Maradona in Mexico",
+        "release_year": 2020,
+        "added_date": "2019-11-13"
+      },
+      {
+        "show_id": "s3370",
+        "title": "BoJack Horseman",
+        "release_year": 2020,
+        "added_date": "2019-10-25"
+      },
+      {
+        "show_id": "s3434",
+        "title": "The Hook Up Plan",
+        "release_year": 2020,
+        "added_date": "2019-10-11"
+      },
+      {
+        "show_id": "s4845",
+        "title": "Unbreakable Kimmy Schmidt",
+        "release_year": 2019,
+        "added_date": "2018-05-30"
+      },
+      {
+        "show_id": "s4846",
+        "title": "Arrested Development",
+        "release_year": 2019,
+        "added_date": "2018-05-29"
+      },
+      {
+        "show_id": "s5395",
+        "title": "Hans Teeuwen: Real Rancour",
+        "release_year": 2018,
+        "added_date": "2017-07-01"
+      },
+      {
+        "show_id": "s5659",
+        "title": "Sense8",
+        "release_year": 2018,
+        "added_date": "2016-12-23"
+      },
+      {
+        "show_id": "s5678",
+        "title": "Tokyo Trial",
+        "release_year": 2017,
+        "added_date": "2016-12-13"
+      },
+      {
+        "show_id": "s7064",
+        "title": "Incoming",
+        "release_year": 2019,
+        "added_date": "2018-10-26"
+      },
+      {
+        "show_id": "s7113",
+        "title": "Jack Taylor",
+        "release_year": 2016,
+        "added_date": "2013-03-31"
+      }
+    ],
+    "rating_nulos": [
+      {
+        "show_id": "s5542",
+        "title": "Louis C.K. 2017"
+      },
+      {
+        "show_id": "s5795",
+        "title": "Louis C.K.: Hilarious"
+      },
+      {
+        "show_id": "s5814",
+        "title": "Louis C.K.: Live at the Comedy Store"
+      },
+      {
+        "show_id": "s5990",
+        "title": "13TH: A Conversation with Oprah Winfrey & Ava DuVernay"
+      },
+      {
+        "show_id": "s6828",
+        "title": "Gargantia on the Verdurous Planet"
+      },
+      {
+        "show_id": "s7313",
+        "title": "Little Lunch"
+      },
+      {
+        "show_id": "s7538",
+        "title": "My Honor Was Loyalty"
+      }
+    ],
+    "date_added_nulos": [
+      {
+        "show_id": "s6067",
+        "title": "A Young Doctor's Notebook and Other Stories"
+      },
+      {
+        "show_id": "s6175",
+        "title": "Anthony Bourdain: Parts Unknown"
+      },
+      {
+        "show_id": "s6796",
+        "title": "Frasier"
+      },
+      {
+        "show_id": "s6807",
+        "title": "Friends"
+      },
+      {
+        "show_id": "s6902",
+        "title": "Gunslinger Girl"
+      },
+      {
+        "show_id": "s7197",
+        "title": "Kikoriki"
+      },
+      {
+        "show_id": "s7255",
+        "title": "La Familia P. Luche"
+      },
+      {
+        "show_id": "s7407",
+        "title": "Maron"
+      },
+      {
+        "show_id": "s7848",
+        "title": "Red vs. Blue"
+      },
+      {
+        "show_id": "s8183",
+        "title": "The Adventures of Figaro Pho"
+      }
+    ],
+    "paises_historicos_normalizados": [
+      {
+        "country_raw": "East Germany",
+        "titles": 1
+      },
+      {
+        "country_raw": "Soviet Union",
+        "titles": 3
+      },
+      {
+        "country_raw": "West Germany",
+        "titles": 5
+      }
+    ],
+    "elementos_multivaluados_con_espacios": 2038,
+    "nota": "Los 3 registros con la duración en el campo rating se corrigieron moviendo el valor a duration_min; su rating queda como desconocido. Los 14 casos con incorporación anterior al estreno se conservan y se marcan (casi todos son series cuya release_year corresponde a la última temporada)."
+  },
+  "multivaluados": {
+    "generos_por_titulo": {
+      "min": 1,
+      "max": 3,
+      "tabla": "title_genres"
+    },
+    "paises_por_titulo": {
+      "min": 1,
+      "max": 12,
+      "tabla": "title_countries",
+      "nota": "Un título puede sumar en varios países; los totales por país no suman el total del catálogo."
+    },
+    "directores_por_titulo": {
+      "max": 13
+    },
+    "regla_porcentajes": "Los porcentajes de género y país usan como denominador el total de títulos (8,807); por eso pueden sumar más de 100%."
+  },
+  "normalizaciones": [
+    {
+      "regla": "type",
+      "detalle": "Movie -> Película; TV Show -> Serie"
+    },
+    {
+      "regla": "date_added",
+      "detalle": "Formato Month D, YYYY parseado a fecha; se derivan año, mes y trimestre."
+    },
+    {
+      "regla": "duration",
+      "detalle": "Películas: minutos; series: temporadas. Nunca se promedian juntos."
+    },
+    {
+      "regla": "country",
+      "detalle": "Separación por comas, trim y primary_country = primer país."
+    },
+    {
+      "regla": "paises_historicos",
+      "detalle": "West Germany y East Germany -> Germany; Soviet Union -> Russia."
+    },
+    {
+      "regla": "rating",
+      "detalle": "Se conservan valores fuente; rating_group es una agrupación derivada para lectura."
+    },
+    {
+      "regla": "generos",
+      "detalle": "Se conserva el nombre original y se agrega etiqueta en español para la interfaz."
+    },
+    {
+      "regla": "sin_pais",
+      "detalle": "Los títulos sin país se excluyen de rankings y mapa, pero permanecen en los totales."
+    },
+    {
+      "regla": "sin_director",
+      "detalle": "Los nulos de director no se imputan; se excluyen del ranking de directores."
+    }
+  ]
+}

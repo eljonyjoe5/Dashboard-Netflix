@@ -1,0 +1,640 @@
+{
+  "archivo": "netflix_titles.csv",
+  "bytes": 3399671,
+  "filas": 8807,
+  "columnas": [
+    "show_id",
+    "type",
+    "title",
+    "director",
+    "cast",
+    "country",
+    "date_added",
+    "release_year",
+    "rating",
+    "duration",
+    "listed_in",
+    "description"
+  ],
+  "columnas_esperadas": [
+    "show_id",
+    "type",
+    "title",
+    "director",
+    "cast",
+    "country",
+    "date_added",
+    "release_year",
+    "rating",
+    "duration",
+    "listed_in",
+    "description"
+  ],
+  "nulos_por_campo": [
+    {
+      "campo": "show_id",
+      "nulos": 0,
+      "porcentaje": 0.0
+    },
+    {
+      "campo": "type",
+      "nulos": 0,
+      "porcentaje": 0.0
+    },
+    {
+      "campo": "title",
+      "nulos": 0,
+      "porcentaje": 0.0
+    },
+    {
+      "campo": "director",
+      "nulos": 2634,
+      "porcentaje": 29.91
+    },
+    {
+      "campo": "cast",
+      "nulos": 825,
+      "porcentaje": 9.37
+    },
+    {
+      "campo": "country",
+      "nulos": 831,
+      "porcentaje": 9.44
+    },
+    {
+      "campo": "date_added",
+      "nulos": 10,
+      "porcentaje": 0.11
+    },
+    {
+      "campo": "release_year",
+      "nulos": 0,
+      "porcentaje": 0.0
+    },
+    {
+      "campo": "rating",
+      "nulos": 4,
+      "porcentaje": 0.05
+    },
+    {
+      "campo": "duration",
+      "nulos": 3,
+      "porcentaje": 0.03
+    },
+    {
+      "campo": "listed_in",
+      "nulos": 0,
+      "porcentaje": 0.0
+    },
+    {
+      "campo": "description",
+      "nulos": 0,
+      "porcentaje": 0.0
+    }
+  ],
+  "show_id_duplicados": 0,
+  "filas_duplicadas_completas": 0,
+  "type_valores": [
+    {
+      "valor": "Movie",
+      "conteo": 6131
+    },
+    {
+      "valor": "TV Show",
+      "conteo": 2676
+    }
+  ],
+  "release_year": {
+    "min": 1925,
+    "max": 2021,
+    "no_numericos": 0,
+    "valores_distintos": 74
+  },
+  "release_year_conteo": [
+    {
+      "anio": 1925,
+      "titulos": 1
+    },
+    {
+      "anio": 1942,
+      "titulos": 2
+    },
+    {
+      "anio": 1943,
+      "titulos": 3
+    },
+    {
+      "anio": 1944,
+      "titulos": 3
+    },
+    {
+      "anio": 1945,
+      "titulos": 4
+    },
+    {
+      "anio": 1946,
+      "titulos": 2
+    },
+    {
+      "anio": 1947,
+      "titulos": 1
+    },
+    {
+      "anio": 1954,
+      "titulos": 2
+    },
+    {
+      "anio": 1955,
+      "titulos": 3
+    },
+    {
+      "anio": 1956,
+      "titulos": 2
+    },
+    {
+      "anio": 1958,
+      "titulos": 3
+    },
+    {
+      "anio": 1959,
+      "titulos": 1
+    },
+    {
+      "anio": 1960,
+      "titulos": 4
+    },
+    {
+      "anio": 1961,
+      "titulos": 1
+    },
+    {
+      "anio": 1962,
+      "titulos": 3
+    },
+    {
+      "anio": 1963,
+      "titulos": 2
+    },
+    {
+      "anio": 1964,
+      "titulos": 2
+    },
+    {
+      "anio": 1965,
+      "titulos": 2
+    },
+    {
+      "anio": 1966,
+      "titulos": 1
+    },
+    {
+      "anio": 1967,
+      "titulos": 5
+    },
+    {
+      "anio": 1968,
+      "titulos": 3
+    },
+    {
+      "anio": 1969,
+      "titulos": 2
+    },
+    {
+      "anio": 1970,
+      "titulos": 2
+    },
+    {
+      "anio": 1971,
+      "titulos": 5
+    },
+    {
+      "anio": 1972,
+      "titulos": 5
+    },
+    {
+      "anio": 1973,
+      "titulos": 10
+    },
+    {
+      "anio": 1974,
+      "titulos": 7
+    },
+    {
+      "anio": 1975,
+      "titulos": 7
+    },
+    {
+      "anio": 1976,
+      "titulos": 9
+    },
+    {
+      "anio": 1977,
+      "titulos": 7
+    },
+    {
+      "anio": 1978,
+      "titulos": 7
+    },
+    {
+      "anio": 1979,
+      "titulos": 11
+    },
+    {
+      "anio": 1980,
+      "titulos": 11
+    },
+    {
+      "anio": 1981,
+      "titulos": 13
+    },
+    {
+      "anio": 1982,
+      "titulos": 17
+    },
+    {
+      "anio": 1983,
+      "titulos": 11
+    },
+    {
+      "anio": 1984,
+      "titulos": 12
+    },
+    {
+      "anio": 1985,
+      "titulos": 10
+    },
+    {
+      "anio": 1986,
+      "titulos": 13
+    },
+    {
+      "anio": 1987,
+      "titulos": 8
+    },
+    {
+      "anio": 1988,
+      "titulos": 18
+    },
+    {
+      "anio": 1989,
+      "titulos": 16
+    },
+    {
+      "anio": 1990,
+      "titulos": 22
+    },
+    {
+      "anio": 1991,
+      "titulos": 17
+    },
+    {
+      "anio": 1992,
+      "titulos": 23
+    },
+    {
+      "anio": 1993,
+      "titulos": 28
+    },
+    {
+      "anio": 1994,
+      "titulos": 22
+    },
+    {
+      "anio": 1995,
+      "titulos": 25
+    },
+    {
+      "anio": 1996,
+      "titulos": 24
+    },
+    {
+      "anio": 1997,
+      "titulos": 38
+    },
+    {
+      "anio": 1998,
+      "titulos": 36
+    },
+    {
+      "anio": 1999,
+      "titulos": 39
+    },
+    {
+      "anio": 2000,
+      "titulos": 37
+    },
+    {
+      "anio": 2001,
+      "titulos": 45
+    },
+    {
+      "anio": 2002,
+      "titulos": 51
+    },
+    {
+      "anio": 2003,
+      "titulos": 61
+    },
+    {
+      "anio": 2004,
+      "titulos": 64
+    },
+    {
+      "anio": 2005,
+      "titulos": 80
+    },
+    {
+      "anio": 2006,
+      "titulos": 96
+    },
+    {
+      "anio": 2007,
+      "titulos": 88
+    },
+    {
+      "anio": 2008,
+      "titulos": 136
+    },
+    {
+      "anio": 2009,
+      "titulos": 152
+    },
+    {
+      "anio": 2010,
+      "titulos": 194
+    },
+    {
+      "anio": 2011,
+      "titulos": 185
+    },
+    {
+      "anio": 2012,
+      "titulos": 237
+    },
+    {
+      "anio": 2013,
+      "titulos": 288
+    },
+    {
+      "anio": 2014,
+      "titulos": 352
+    },
+    {
+      "anio": 2015,
+      "titulos": 560
+    },
+    {
+      "anio": 2016,
+      "titulos": 902
+    },
+    {
+      "anio": 2017,
+      "titulos": 1032
+    },
+    {
+      "anio": 2018,
+      "titulos": 1147
+    },
+    {
+      "anio": 2019,
+      "titulos": 1030
+    },
+    {
+      "anio": 2020,
+      "titulos": 953
+    },
+    {
+      "anio": 2021,
+      "titulos": 592
+    }
+  ],
+  "date_added": {
+    "no_vacios": 8797,
+    "no_parseables_formato_B_d_Y": 0,
+    "min": "2008-01-01 00:00:00",
+    "max": "2021-09-25 00:00:00",
+    "fechas_distintas": 1714
+  },
+  "date_added_ejemplos_no_parseables": [],
+  "date_added_patrones": [
+    {
+      "patron": "Month D, YYYY",
+      "conteo": 8797
+    },
+    {
+      "patron": "otro",
+      "conteo": 10
+    }
+  ],
+  "duration": {
+    "vacios": 0,
+    "con_min": 6128,
+    "con_seasons": 2676,
+    "otros": []
+  },
+  "type_x_duration": [
+    {
+      "type": "Movie",
+      "formato": "minutos",
+      "conteo": 6128
+    },
+    {
+      "type": "Movie",
+      "formato": "otro",
+      "conteo": 3
+    },
+    {
+      "type": "TV Show",
+      "formato": "temporadas",
+      "conteo": 2676
+    }
+  ],
+  "rating_valores": [
+    {
+      "valor": "TV-MA",
+      "conteo": 3207
+    },
+    {
+      "valor": "TV-14",
+      "conteo": 2160
+    },
+    {
+      "valor": "TV-PG",
+      "conteo": 863
+    },
+    {
+      "valor": "R",
+      "conteo": 799
+    },
+    {
+      "valor": "PG-13",
+      "conteo": 490
+    },
+    {
+      "valor": "TV-Y7",
+      "conteo": 334
+    },
+    {
+      "valor": "TV-Y",
+      "conteo": 307
+    },
+    {
+      "valor": "PG",
+      "conteo": 287
+    },
+    {
+      "valor": "TV-G",
+      "conteo": 220
+    },
+    {
+      "valor": "NR",
+      "conteo": 80
+    },
+    {
+      "valor": "G",
+      "conteo": 41
+    },
+    {
+      "valor": "TV-Y7-FV",
+      "conteo": 6
+    },
+    {
+      "valor": "(vacio)",
+      "conteo": 4
+    },
+    {
+      "valor": "NC-17",
+      "conteo": 3
+    },
+    {
+      "valor": "UR",
+      "conteo": 3
+    },
+    {
+      "valor": "84 min",
+      "conteo": 1
+    },
+    {
+      "valor": "66 min",
+      "conteo": 1
+    },
+    {
+      "valor": "74 min",
+      "conteo": 1
+    }
+  ],
+  "rating_anomalias": [
+    {
+      "show_id": "s5542",
+      "rating": "74 min",
+      "duration": null,
+      "type": "Movie"
+    },
+    {
+      "show_id": "s5795",
+      "rating": "84 min",
+      "duration": null,
+      "type": "Movie"
+    },
+    {
+      "show_id": "s5814",
+      "rating": "66 min",
+      "duration": null,
+      "type": "Movie"
+    }
+  ],
+  "multivaluado_country": {
+    "con_coma": 1320,
+    "distintos_brutos": 748,
+    "max_elementos": 12
+  },
+  "multivaluado_listed_in": {
+    "con_coma": 6787,
+    "distintos_brutos": 514,
+    "max_elementos": 3
+  },
+  "multivaluado_cast": {
+    "con_coma": 7101,
+    "distintos_brutos": 7692,
+    "max_elementos": 50
+  },
+  "multivaluado_director": {
+    "con_coma": 614,
+    "distintos_brutos": 4528,
+    "max_elementos": 13
+  },
+  "paises_distintos_brutos": 123,
+  "elementos_con_espacio_extra": 2038,
+  "muestra_5": [
+    {
+      "show_id": "s1",
+      "type": "Movie",
+      "title": "Dick Johnson Is Dead",
+      "director": "Kirsten Johnson",
+      "cast": null,
+      "country": "United States",
+      "date_added": "September 25, 2021",
+      "release_year": "2020",
+      "rating": "PG-13",
+      "duration": "90 min",
+      "listed_in": "Documentaries",
+      "description": "As her father nears the end of his life, filmmaker Kirsten Johnson stages his death in inventive and comical ways to help them both face the inevitable."
+    },
+    {
+      "show_id": "s2",
+      "type": "TV Show",
+      "title": "Blood & Water",
+      "director": null,
+      "cast": "Ama Qamata, Khosi Ngema, Gail Mabalane, Thabang Molaba, Dillon Windvogel, Natasha Thahane, Arno Greeff, Xolile Tshabalala, Getmore Sithole, Cindy Mahlangu, Ryle De Morny, Greteli Fincham, Sello Maake Ka-Ncube, Odwa Gwanya, Mekaila Mathys, Sandi Schultz, Duane Williams, Shamilla Miller, Patrick Mofokeng",
+      "country": "South Africa",
+      "date_added": "September 24, 2021",
+      "release_year": "2021",
+      "rating": "TV-MA",
+      "duration": "2 Seasons",
+      "listed_in": "International TV Shows, TV Dramas, TV Mysteries",
+      "description": "After crossing paths at a party, a Cape Town teen sets out to prove whether a private-school swimming star is her sister who was abducted at birth."
+    },
+    {
+      "show_id": "s3",
+      "type": "TV Show",
+      "title": "Ganglands",
+      "director": "Julien Leclercq",
+      "cast": "Sami Bouajila, Tracy Gotoas, Samuel Jouy, Nabiha Akkari, Sofia Lesaffre, Salim Kechiouche, Noureddine Farihi, Geert Van Rampelberg, Bakary Diombera",
+      "country": null,
+      "date_added": "September 24, 2021",
+      "release_year": "2021",
+      "rating": "TV-MA",
+      "duration": "1 Season",
+      "listed_in": "Crime TV Shows, International TV Shows, TV Action & Adventure",
+      "description": "To protect his family from a powerful drug lord, skilled thief Mehdi and his expert team of robbers are pulled into a violent and deadly turf war."
+    },
+    {
+      "show_id": "s4",
+      "type": "TV Show",
+      "title": "Jailbirds New Orleans",
+      "director": null,
+      "cast": null,
+      "country": null,
+      "date_added": "September 24, 2021",
+      "release_year": "2021",
+      "rating": "TV-MA",
+      "duration": "1 Season",
+      "listed_in": "Docuseries, Reality TV",
+      "description": "Feuds, flirtations and toilet talk go down among the incarcerated women at the Orleans Justice Center in New Orleans on this gritty reality series."
+    },
+    {
+      "show_id": "s5",
+      "type": "TV Show",
+      "title": "Kota Factory",
+      "director": null,
+      "cast": "Mayur More, Jitendra Kumar, Ranjan Raj, Alam Khan, Ahsaas Channa, Revathi Pillai, Urvi Singh, Arun Kumar",
+      "country": "India",
+      "date_added": "September 24, 2021",
+      "release_year": "2021",
+      "rating": "TV-MA",
+      "duration": "2 Seasons",
+      "listed_in": "International TV Shows, Romantic TV Shows, TV Comedies",
+      "description": "In a city of coaching centers known to train India’s finest collegiate minds, an earnest but unexceptional student and his friends navigate campus life."
+    }
+  ]
+}

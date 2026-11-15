@@ -1,0 +1,2075 @@
+"""
+Genera el informe de diseño y justificación del Proyecto 3.
+
+El documento se construye como HTML imprimible con las cifras reales del ETL
+(data/quality_report.json y public/data/dashboard.json) y las capturas del
+tablero en docs/img/. Después se imprime a PDF con Chrome en modo headless.
+
+Estructura:
+    01 Portada
+    02 Índice
+    03 Análisis de la audiencia
+    04 Definición de objetivos
+    05 Preprocesamiento · identificación de variables
+    06 Preprocesamiento · limpieza y atípicos
+    07 Preprocesamiento · integración de datos
+    08 Selección del tipo de dashboard
+    09 Justificación del tipo elegido
+    10 El tablero
+    11 Visualizaciones y lectura
+    12 Cierre, límites y referencias
+
+Uso:
+    python docs/generate_pdf.py
+"""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+from datetime import date
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+DOCS = ROOT / "docs"
+PUBLIC_DOCS = ROOT / "public" / "docs"
+QUALITY = ROOT / "data" / "quality_report.json"
+DASHBOARD = ROOT / "public" / "data" / "dashboard.json"
+HTML = DOCS / "justificacion.html"
+PDF = DOCS / "Justificacion_Fase1.pdf"
+
+TEAM = "Jonathan Alexander Gonzalez Romero"
+TEACHER = "Jessica Carmin Mendiola Fuentes"
+SUBJECT = "Visualización de datos · Proyecto 3"
+TOPIC = "Negocios y cultura digital"
+BRAND = "Catálogo en foco"
+TOTAL_PAGES = 12
+
+
+def fmt_int(value: float | int) -> str:
+    return f"{int(round(value)):,}"
+
+
+def fmt_pct(value: float, digits: int = 2) -> str:
+    return f"{value:.{digits}f}%"
+
+
+def load() -> tuple[dict, dict]:
+    quality = json.loads(QUALITY.read_text(encoding="utf-8"))
+    dashboard = json.loads(DASHBOARD.read_text(encoding="utf-8"))
+    return quality, dashboard
+
+
+def find_chrome() -> str:
+    candidates = [
+        os.environ.get("CHROME_PATH"),
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        shutil.which("google-chrome"),
+        shutil.which("chromium"),
+        shutil.which("chrome"),
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return str(candidate)
+    raise SystemExit("No se encontró Chrome. Define CHROME_PATH o instala Google Chrome.")
+
+
+CSS = r"""
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("../node_modules/@fontsource/fraunces/files/fraunces-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("../node_modules/@fontsource/fraunces/files/fraunces-latin-400-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("../node_modules/@fontsource/fraunces/files/fraunces-latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("../node_modules/@fontsource/fraunces/files/fraunces-latin-600-italic.woff2") format("woff2");
+  font-weight: 600;
+  font-style: italic;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("../node_modules/@fontsource/fraunces/files/fraunces-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("../node_modules/@fontsource/dm-sans/files/dm-sans-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("../node_modules/@fontsource/dm-sans/files/dm-sans-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("../node_modules/@fontsource/dm-sans/files/dm-sans-latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("../node_modules/@fontsource/dm-sans/files/dm-sans-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+}
+
+:root {
+  --paper: #fbf9f5;
+  --paper-2: #f4f0e8;
+  --paper-3: #ece5d8;
+  --white: #ffffff;
+  --ink: #171614;
+  --ink-soft: #35322d;
+  --muted: #6f6b63;
+  --muted-2: #948d82;
+  --line: #e0d9cc;
+  --line-2: #cfc6b6;
+  --red: #d90429;
+  --red-deep: #9e0018;
+  --red-soft: #f8e6e8;
+  --amber: #b7791f;
+  --green: #2f6b4f;
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "DM Sans", "Segoe UI", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 9.2pt;
+  line-height: 1.55;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  padding: 15mm 17mm 17mm;
+  overflow: hidden;
+  page-break-after: always;
+  background: var(--paper);
+}
+
+.page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1.5mm;
+  background: var(--red);
+}
+
+.page:last-child { page-break-after: auto; }
+
+/* ------------------------------------------------------------
+   Cabecera y pie de página
+   ------------------------------------------------------------ */
+
+.runhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8mm;
+  padding-bottom: 2mm;
+  margin-bottom: 5mm;
+  border-bottom: 0.6pt solid var(--line);
+  font-size: 6.5pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.rh-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.4mm;
+  font-family: var(--serif);
+  font-size: 9.5pt;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.rh-brand i {
+  display: inline-block;
+  width: 4mm;
+  height: 4mm;
+  background: var(--red);
+  position: relative;
+}
+
+.rh-brand i::after {
+  content: "";
+  position: absolute;
+  inset: 1.1mm;
+  border: 0.8pt solid var(--paper);
+}
+
+.pfoot {
+  position: absolute;
+  left: 17mm;
+  right: 17mm;
+  bottom: 7mm;
+  display: flex;
+  justify-content: space-between;
+  gap: 6mm;
+  padding-top: 2mm;
+  border-top: 0.6pt solid var(--line);
+  font-size: 6.4pt;
+  letter-spacing: 0.08em;
+  color: var(--muted-2);
+}
+
+/* ------------------------------------------------------------
+   Tipografía y bloques base
+   ------------------------------------------------------------ */
+
+h1, h2, h3, h4 {
+  font-family: var(--serif);
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+h2 { font-size: 21pt; line-height: 1.02; font-weight: 600; }
+h3 { font-size: 11.2pt; line-height: 1.18; font-weight: 600; margin: 0 0 1.8mm; }
+h4 { font-size: 8.4pt; line-height: 1.2; font-weight: 600; margin: 0 0 1.2mm; }
+
+p { margin: 0 0 2.4mm; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+.small { font-size: 7.6pt; line-height: 1.5; color: var(--muted); }
+.tiny { font-size: 6.8pt; line-height: 1.45; color: var(--muted-2); }
+.red { color: var(--red); }
+.amber { color: var(--amber); }
+
+.sec-head {
+  display: grid;
+  grid-template-columns: 15mm minmax(0, 1fr);
+  gap: 4mm;
+  align-items: start;
+  margin-bottom: 3.5mm;
+}
+
+.sec-num {
+  font-family: var(--serif);
+  font-size: 29pt;
+  font-weight: 600;
+  line-height: 0.82;
+  letter-spacing: -0.05em;
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+
+.sec-label {
+  margin: 0 0 1.4mm;
+  font-size: 6.5pt;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.lead {
+  max-width: 158mm;
+  margin: 0 0 4mm;
+  font-size: 10.3pt;
+  line-height: 1.48;
+  color: var(--ink-soft);
+}
+
+.lead strong { color: var(--ink); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; align-items: start; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3.5mm; align-items: start; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; align-items: stretch; }
+
+.card {
+  border: 0.6pt solid var(--line);
+  background: var(--white);
+  padding: 3.6mm 4mm;
+}
+
+.card h3 { font-size: 10.4pt; margin-bottom: 1.4mm; }
+.card p:last-child { margin-bottom: 0; }
+
+.card-top { border-top: 1.6pt solid var(--ink); }
+.card-top.red { border-top-color: var(--red); }
+.card-top.amber { border-top-color: var(--amber); }
+
+.callout {
+  border-left: 2.4pt solid var(--red);
+  background: var(--white);
+  padding: 3.4mm 4.2mm;
+  font-size: 8.4pt;
+  line-height: 1.52;
+}
+
+.callout h4 { color: var(--red); }
+.callout p:last-child { margin-bottom: 0; }
+
+.note-box {
+  border: 0.6pt solid var(--line);
+  background: var(--paper-2);
+  padding: 3.2mm 3.8mm;
+  font-size: 7.8pt;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.note-box strong { color: var(--ink); }
+.note-box p:last-child { margin-bottom: 0; }
+
+.tag {
+  display: inline-block;
+  padding: 0.5mm 1.8mm;
+  border: 0.6pt solid var(--line-2);
+  background: var(--paper);
+  font-size: 6.2pt;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tag.red {
+  border-color: var(--red);
+  background: var(--red);
+  color: #fff;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1.4pt solid var(--ink);
+}
+
+.kpi {
+  padding: 2.8mm 4mm 3mm 0;
+  border-right: 0.6pt solid var(--line);
+}
+
+.kpi:last-child { border-right: 0; }
+.kpi:not(:first-child) { padding-left: 4mm; }
+
+.kpi .label {
+  display: block;
+  font-size: 6.3pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.kpi strong {
+  display: block;
+  margin-top: 1.2mm;
+  font-family: var(--serif);
+  font-size: 17pt;
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi .note {
+  display: block;
+  margin-top: 1.4mm;
+  font-size: 6.8pt;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+ul, ol { margin: 0 0 2.4mm; padding-left: 4.6mm; }
+li { margin-bottom: 1.1mm; }
+li:last-child { margin-bottom: 0; }
+
+/* ------------------------------------------------------------
+   Tablas
+   ------------------------------------------------------------ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 7.6pt;
+  line-height: 1.42;
+}
+
+th {
+  padding: 1.5mm 1.6mm;
+  border-bottom: 1pt solid var(--ink);
+  text-align: left;
+  font-size: 6.2pt;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: bottom;
+}
+
+td {
+  padding: 1.45mm 1.6mm;
+  border-bottom: 0.5pt solid var(--line);
+  vertical-align: top;
+}
+
+th.num, td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: 0; }
+table.compact { font-size: 7.1pt; }
+table.compact th { padding: 1.2mm 1.5mm; }
+table.compact td { padding: 1.15mm 1.5mm; }
+
+/* ------------------------------------------------------------
+   Portada
+   ------------------------------------------------------------ */
+
+.cover { padding: 0; }
+.cover::before { height: 2.2mm; }
+
+.cover-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 16mm 18mm 13mm;
+}
+
+.cover-brand {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  font-family: var(--serif);
+  font-size: 13pt;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.cover-brand i {
+  position: relative;
+  display: inline-block;
+  width: 8mm;
+  height: 8mm;
+  background: var(--red);
+}
+
+.cover-brand i::after {
+  content: "";
+  position: absolute;
+  inset: 2.2mm;
+  border: 1.1pt solid var(--paper);
+}
+
+.cover-brand span { color: var(--red); font-style: italic; font-weight: 400; }
+
+.cover-topline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8mm;
+  padding-bottom: 3mm;
+  border-bottom: 0.7pt solid var(--line);
+  font-size: 6.6pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.cover-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(48mm, 0.6fr);
+  gap: 13mm;
+  align-items: end;
+  margin: 8mm 0 6mm;
+}
+
+.cover h1 {
+  margin: 4mm 0 0;
+  font-size: 37pt;
+  font-weight: 600;
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+}
+
+.cover h1 em {
+  display: block;
+  margin-top: 2.5mm;
+  font-size: 19pt;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--red);
+}
+
+.cover .lead {
+  margin: 6mm 0 0;
+  font-size: 10.8pt;
+  max-width: 112mm;
+}
+
+.cover-figure {
+  padding-top: 4mm;
+  border-top: 2.2pt solid var(--ink);
+}
+
+.cover-figure .label {
+  display: block;
+  font-size: 6.4pt;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.cover-figure .big {
+  display: block;
+  margin: 2mm 0 1mm;
+  font-family: var(--serif);
+  font-size: 31pt;
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cover-figure p {
+  margin: 0 0 3mm;
+  font-size: 7.4pt;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.cover-figure dl {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-top: 0.6pt solid var(--line);
+}
+
+.cover-figure dl div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4mm;
+  padding: 1.5mm 0;
+  border-bottom: 0.6pt solid var(--line);
+}
+
+.cover-figure dt {
+  font-size: 6.3pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.cover-figure dd {
+  margin: 0;
+  font-size: 7.6pt;
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+.cover-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 9mm;
+  border-top: 1.2pt solid var(--ink);
+  border-bottom: 0.6pt solid var(--line);
+}
+
+.cover-strip div {
+  padding: 3mm 4mm 3.4mm 0;
+  border-right: 0.6pt solid var(--line);
+}
+
+.cover-strip div:last-child { border-right: 0; }
+.cover-strip div:not(:first-child) { padding-left: 4mm; }
+
+.cover-strip .k {
+  display: block;
+  font-size: 6.2pt;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.cover-strip p {
+  margin: 1.1mm 0 0;
+  font-size: 7.3pt;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.cover-quote {
+  max-width: 132mm;
+  margin-top: 13mm;
+  padding-left: 5mm;
+  border-left: 2.2pt solid var(--red);
+}
+
+.cover-quote .k {
+  display: block;
+  font-size: 6.2pt;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.cover-quote p {
+  margin: 2mm 0 0;
+  font-family: var(--serif);
+  font-size: 17pt;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.24;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+
+.cover-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 8mm;
+  border-top: 0.8pt solid var(--ink);
+}
+
+.cover-meta div {
+  padding: 3mm 4mm 3mm 0;
+  border-bottom: 0.6pt solid var(--line);
+}
+
+.cover-meta div:nth-child(3n + 2),
+.cover-meta div:nth-child(3n + 3) {
+  padding-left: 4mm;
+  border-left: 0.6pt solid var(--line);
+}
+
+.cover-meta dt {
+  font-size: 6.2pt;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.cover-meta dd {
+  margin: 1mm 0 0;
+  font-size: 8.2pt;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.cover-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8mm;
+  margin-top: 6mm;
+  padding-top: 3mm;
+  border-top: 0.6pt solid var(--line);
+  font-size: 6.6pt;
+  letter-spacing: 0.08em;
+  color: var(--muted-2);
+}
+
+.cover-foot strong { color: var(--ink); font-weight: 600; }
+
+/* ------------------------------------------------------------
+   Índice
+   ------------------------------------------------------------ */
+
+.index-title {
+  display: grid;
+  grid-template-columns: 15mm minmax(0, 1fr);
+  gap: 4mm;
+  align-items: start;
+  margin-bottom: 4mm;
+}
+
+.index-list {
+  border-top: 1.4pt solid var(--ink);
+}
+
+.index-row {
+  display: grid;
+  grid-template-columns: 11mm minmax(0, 1fr) 13mm;
+  gap: 4mm;
+  align-items: baseline;
+  padding: 3.05mm 0;
+  border-bottom: 0.5pt solid var(--line);
+}
+
+.index-row .n {
+  font-family: var(--serif);
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+
+.index-row h3 {
+  margin: 0;
+  font-size: 11.2pt;
+  line-height: 1.15;
+}
+
+.index-row p {
+  margin: 0.7mm 0 0;
+  font-size: 7.4pt;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.index-row .p {
+  font-family: var(--serif);
+  font-size: 10.5pt;
+  font-weight: 600;
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.index-foot {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 4mm;
+  margin-top: 5mm;
+}
+
+/* ------------------------------------------------------------
+   Audiencia
+   ------------------------------------------------------------ */
+
+.personas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3.5mm;
+  margin-bottom: 4mm;
+}
+
+.persona {
+  border-top: 1.4pt solid var(--ink);
+  padding-top: 2.4mm;
+}
+
+.persona:nth-child(2) { border-top-color: var(--red); }
+.persona:nth-child(3) { border-top-color: var(--amber); }
+
+.persona-letter {
+  font-family: var(--serif);
+  font-size: 13pt;
+  font-weight: 600;
+  color: var(--red);
+}
+
+.persona h3 {
+  margin: 1.2mm 0 1.4mm;
+  font-size: 9.8pt;
+  line-height: 1.16;
+}
+
+.persona p {
+  font-size: 7.6pt;
+  line-height: 1.48;
+  color: var(--muted);
+  margin-bottom: 2mm;
+}
+
+.persona dl {
+  margin: 0;
+  padding-top: 1.6mm;
+  border-top: 0.5pt solid var(--line);
+}
+
+.persona dl div { margin-bottom: 1.4mm; }
+
+.persona dt {
+  font-size: 6pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.persona dd {
+  margin: 0.4mm 0 0;
+  font-size: 7.3pt;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------
+   Objetivos y cadenas
+   ------------------------------------------------------------ */
+
+.chain {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 0 0 4mm;
+  border-top: 1.4pt solid var(--ink);
+  border-bottom: 0.6pt solid var(--line);
+}
+
+.chain-step {
+  padding: 2.6mm 3.2mm 3mm 0;
+  border-right: 0.6pt solid var(--line);
+}
+
+.chain-step:last-child { border-right: 0; }
+.chain-step:not(:first-child) { padding-left: 3.2mm; }
+
+.chain-step .k {
+  display: block;
+  font-size: 6pt;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.chain-step p {
+  margin: 1.2mm 0 0;
+  font-size: 7.4pt;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.objective-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.objective-list li {
+  position: relative;
+  padding-left: 6mm;
+  margin-bottom: 2mm;
+  font-size: 7.8pt;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.objective-list li::before {
+  content: attr(data-n);
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--serif);
+  font-size: 8pt;
+  font-weight: 600;
+  color: var(--red);
+}
+
+.example {
+  border: 0.8pt solid var(--ink);
+  background: var(--white);
+  padding: 4mm 4.4mm;
+}
+
+.example .k {
+  display: block;
+  font-size: 6.2pt;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.example h3 {
+  margin: 1.4mm 0 2mm;
+  font-size: 11pt;
+}
+
+.example p {
+  font-size: 8pt;
+  line-height: 1.52;
+}
+
+.example p:last-child { margin-bottom: 0; }
+
+/* ------------------------------------------------------------
+   Preprocesamiento
+   ------------------------------------------------------------ */
+
+.var-role {
+  display: inline-block;
+  padding: 0.3mm 1.4mm;
+  border: 0.5pt solid var(--line-2);
+  font-size: 6pt;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.var-role.dim { border-color: #c9a0a7; color: var(--red-deep); background: #fbebed; }
+.var-role.met { border-color: #d8c39a; color: #7a5210; background: #f8efdd; }
+.var-role.id { border-color: #b9c9bd; color: var(--green); background: #eaf1ec; }
+
+.derived-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 0.6pt solid var(--line);
+}
+
+.derived-list li {
+  display: grid;
+  grid-template-columns: 34mm minmax(0, 1fr);
+  gap: 3mm;
+  padding: 1.5mm 0;
+  border-bottom: 0.5pt solid var(--line);
+  font-size: 7.2pt;
+  line-height: 1.4;
+}
+
+.derived-list code,
+td code,
+.note-box code,
+.commands code {
+  padding: 0.2mm 1mm;
+  background: var(--paper-2);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.92em;
+  color: var(--ink-soft);
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2mm;
+  margin: 0 0 4mm;
+}
+
+.flow .step {
+  border-top: 1.4pt solid var(--ink);
+  padding-top: 2mm;
+  font-size: 6.9pt;
+  line-height: 1.42;
+  color: var(--muted);
+}
+
+.flow .step b {
+  display: block;
+  margin-bottom: 1mm;
+  font-family: var(--serif);
+  font-size: 7.8pt;
+  font-weight: 600;
+  color: var(--red);
+}
+
+.outlier-box {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1.2pt solid var(--ink);
+  border-bottom: 0.6pt solid var(--line);
+}
+
+.outlier-box div {
+  padding: 2.6mm 3mm 2.8mm 0;
+  border-right: 0.6pt solid var(--line);
+}
+
+.outlier-box div:last-child { border-right: 0; }
+.outlier-box div:not(:first-child) { padding-left: 3mm; }
+
+.outlier-box .k {
+  display: block;
+  font-size: 6pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.outlier-box strong {
+  display: block;
+  margin-top: 1mm;
+  font-family: var(--serif);
+  font-size: 14pt;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.outlier-box p {
+  margin: 1.2mm 0 0;
+  font-size: 6.8pt;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------
+   Comparación de tipos de dashboard
+   ------------------------------------------------------------ */
+
+.compare {
+  font-size: 7.2pt;
+  line-height: 1.38;
+}
+
+.compare th { padding: 1.6mm 1.5mm; }
+.compare td { padding: 1.55mm 1.5mm; }
+
+.compare th.chosen {
+  background: var(--red);
+  color: #fff;
+  border-bottom-color: var(--red);
+}
+
+.compare td.chosen {
+  background: #fbeff0;
+  color: var(--ink);
+}
+
+.compare td.chosen strong { color: var(--red-deep); }
+
+.compare .rowlabel {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.type-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3.5mm;
+  margin-top: 4mm;
+}
+
+.type-card {
+  padding: 3mm 0 0;
+  border-top: 1.2pt solid var(--line-2);
+}
+
+.type-card.is-chosen { border-top-color: var(--red); }
+
+.type-card h4 {
+  margin: 0 0 1.2mm;
+  font-family: var(--serif);
+  font-size: 10pt;
+}
+
+.type-card p {
+  margin: 0;
+  font-size: 7.3pt;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.type-card.is-chosen p { color: var(--ink-soft); }
+
+/* ------------------------------------------------------------
+   Justificación
+   ------------------------------------------------------------ */
+
+.reasons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm 5mm;
+  margin-bottom: 4mm;
+}
+
+.reason {
+  display: grid;
+  grid-template-columns: 8mm minmax(0, 1fr);
+  gap: 2.4mm;
+  align-items: start;
+  padding-top: 2.2mm;
+  border-top: 0.6pt solid var(--line);
+}
+
+.reason .n {
+  font-family: var(--serif);
+  font-size: 13pt;
+  font-weight: 600;
+  line-height: 0.9;
+  color: var(--red);
+}
+
+.reason h3 {
+  margin: 0 0 1.2mm;
+  font-size: 9.4pt;
+}
+
+.reason p {
+  margin: 0;
+  font-size: 7.4pt;
+  line-height: 1.48;
+  color: var(--muted);
+}
+
+.contrast {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm;
+  margin-bottom: 4mm;
+}
+
+.contrast .card h4 {
+  color: var(--muted-2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: var(--sans);
+  font-size: 6.2pt;
+}
+
+.contrast .card p {
+  font-size: 7.4pt;
+  line-height: 1.48;
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------
+   Figuras
+   ------------------------------------------------------------ */
+
+figure { margin: 0; }
+
+figure img {
+  display: block;
+  width: 100%;
+  border: 0.6pt solid var(--line);
+  background: var(--white);
+}
+
+figcaption {
+  margin-top: 1.3mm;
+  font-size: 6.6pt;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+figcaption b {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.fig-150 { width: 150mm; margin: 0 auto; }
+.fig-140 { width: 140mm; margin: 0 auto; }
+.fig-130 { width: 130mm; margin: 0 auto; }
+.fig-120 { width: 120mm; margin: 0 auto; }
+.fig-110 { width: 110mm; margin: 0 auto; }
+
+/* ------------------------------------------------------------
+   Cierre
+   ------------------------------------------------------------ */
+
+.commands {
+  background: #171614;
+  color: #e9e3d8;
+  padding: 3.2mm 3.8mm;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 7pt;
+  line-height: 1.7;
+}
+
+.commands b { color: #ff6b72; font-weight: 600; }
+
+.quote {
+  margin: 5mm 0 0;
+  padding-top: 3.5mm;
+  border-top: 1.2pt solid var(--ink);
+  font-family: var(--serif);
+  font-size: 15pt;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.quote span {
+  display: block;
+  margin-top: 2mm;
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 6.6pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.checklist li {
+  position: relative;
+  padding-left: 4.6mm;
+  margin-bottom: 1.3mm;
+  font-size: 7.5pt;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.checklist li::before {
+  content: "";
+  position: absolute;
+  top: 1.5mm;
+  left: 0;
+  width: 2.4mm;
+  height: 1.2pt;
+  background: var(--red);
+}
+"""
+
+
+# ------------------------------------------------------------------
+# Helpers de composición
+# ------------------------------------------------------------------
+
+def runhead(section: str) -> str:
+    return (
+        '<div class="runhead">'
+        f'<span class="rh-brand"><i></i>{BRAND}</span>'
+        f"<span>{section}</span>"
+        "</div>"
+    )
+
+
+def pfoot(n: int) -> str:
+    return (
+        '<div class="pfoot">'
+        f"<span>{BRAND} · Proyecto 3 · Visualización de datos</span>"
+        f"<span>{n} / {TOTAL_PAGES}</span>"
+        "</div>"
+    )
+
+
+def page(n: int, section: str, body: str, extra: str = "") -> str:
+    return f'<section class="page {extra}">{runhead(section)}{body}{pfoot(n)}</section>'
+
+
+def sec_head(num: str, label: str, title: str) -> str:
+    return (
+        '<div class="sec-head">'
+        f'<div class="sec-num">{num}</div>'
+        "<div>"
+        f'<p class="sec-label">{label}</p>'
+        f"<h2>{title}</h2>"
+        "</div></div>"
+    )
+
+
+# ------------------------------------------------------------------
+# 01 · Portada
+# ------------------------------------------------------------------
+
+def cover(dashboard: dict) -> str:
+    meta = dashboard["meta"]
+    k = dashboard["kpis"]
+    return f"""
+<section class="page cover">
+  <div class="cover-inner">
+    <div>
+      <div class="cover-brand"><i></i>Catálogo <span>en foco</span></div>
+      <div class="cover-topline" style="margin-top:5mm">
+        <span>{SUBJECT}</span>
+        <span>Informe de diseño · {date.today().strftime('%d/%m/%Y')}</span>
+      </div>
+
+      <div class="cover-body">
+        <div>
+          <p class="sec-label" style="color:var(--red)">Del dato al tablero</p>
+          <h1>La economía del entretenimiento<em>Netflix y tendencias globales</em></h1>
+          <p class="lead">Cómo se diseñó un tablero para leer la composición y la evolución del catálogo de Netflix: para quién es, qué problema resuelve, cómo se prepararon los datos y por qué el tipo de tablero elegido es el táctico.</p>
+        </div>
+
+        <aside class="cover-figure">
+          <span class="label">Títulos analizados</span>
+          <span class="big">{fmt_int(meta['total_titulos'])}</span>
+          <p>100% del catálogo, sin muestreo. Corte al 25 de septiembre de 2021.</p>
+          <dl>
+            <div><dt>Películas</dt><dd>{fmt_int(k['peliculas'])}</dd></div>
+            <div><dt>Series</dt><dd>{fmt_int(k['series'])}</dd></div>
+            <div><dt>Países</dt><dd>{k['paises_distintos']}</dd></div>
+            <div><dt>Géneros</dt><dd>42</dd></div>
+            <div><dt>Cobertura</dt><dd>1925–2021</dd></div>
+          </dl>
+        </aside>
+      </div>
+
+      <div class="cover-strip">
+        <div><span class="k">01 · Audiencia</span><p>Tres perfiles con decisiones y niveles de detalle distintos: analista, docencia y público general.</p></div>
+        <div><span class="k">02 · Objetivo</span><p>Comparar la composición del catálogo por país, año, género y formato con un denominador consistente.</p></div>
+        <div><span class="k">03 · Tipo de tablero</span><p>Táctico: compara, prioriza y argumenta. No opera la plataforma ni promete predicciones.</p></div>
+      </div>
+
+      <div class="cover-quote">
+        <span class="k">Tesis del proyecto</span>
+        <p>“El tablero no mide cuánto gana Netflix; mide qué decide mostrar y desde dónde.”</p>
+      </div>
+    </div>
+
+    <div>
+      <dl class="cover-meta">
+        <div><dt>Equipo</dt><dd>{TEAM}</dd></div>
+        <div><dt>Docente</dt><dd>{TEACHER}</dd></div>
+        <div><dt>Tema</dt><dd>{TOPIC}</dd></div>
+        <div><dt>Fuente</dt><dd>Kaggle · shivamb/netflix-shows</dd></div>
+        <div><dt>Corte del catálogo</dt><dd>25 de septiembre de 2021</dd></div>
+        <div><dt>Entregable</dt><dd>Tablero web + informe PDF</dd></div>
+      </dl>
+      <div class="cover-foot">
+        <span><strong>{BRAND}</strong> · Informe de diseño y justificación</span>
+        <span>{TOTAL_PAGES} páginas · Español (México)</span>
+      </div>
+    </div>
+  </div>
+</section>
+"""
+
+
+# ------------------------------------------------------------------
+# 02 · Índice
+# ------------------------------------------------------------------
+
+INDEX_ITEMS = [
+    ("01", "Análisis de la audiencia", "Quién usa el tablero, qué decide y con qué nivel de detalle.", 3),
+    ("02", "Definición de objetivos", "Problema, pregunta, objetivo general y ejemplo de uso.", 4),
+    ("03", "Preprocesamiento · variables", "Identificación de campos, roles y variables derivadas.", 5),
+    ("04", "Preprocesamiento · limpieza", "Faltantes, duplicados y criterios de atípicos.", 6),
+    ("05", "Preprocesamiento · integración", "Tablas puente, normalización y modelo analítico.", 7),
+    ("06", "Selección del tipo de dashboard", "Comparación entre operativo, táctico y estratégico.", 8),
+    ("07", "Justificación del tipo elegido", "Por qué el tablero es táctico y cómo se refleja en la interfaz.", 9),
+    ("08", "El tablero", "Evidencia visual de la portada y del panel de indicadores.", 10),
+    ("09", "Visualizaciones y lectura", "Mapa, tiempo y géneros: qué muestra cada vista.", 11),
+    ("10", "Cierre, límites y referencias", "Alcance, reproducibilidad y conclusiones.", 12),
+]
+
+
+def index_page() -> str:
+    rows = "".join(
+        f"""<div class="index-row">
+          <span class="n">{n}</span>
+          <div><h3>{title}</h3><p>{desc}</p></div>
+          <span class="p">{p}</span>
+        </div>"""
+        for n, title, desc, p in INDEX_ITEMS
+    )
+    return page(
+        2,
+        "Índice",
+        f"""
+  <div class="index-title">
+    <div class="sec-num">00</div>
+    <div>
+      <p class="sec-label">Contenido del informe</p>
+      <h2>Índice</h2>
+    </div>
+  </div>
+  <p class="lead">El informe sigue el orden de las decisiones de diseño: primero la audiencia y el objetivo, después el tratamiento de los datos y, al final, la elección del tipo de tablero con su justificación y su evidencia visual.</p>
+  <div class="index-list">{rows}</div>
+  <div class="index-foot">
+    <div class="note-box">
+      <strong>Cómo leer este informe.</strong> Cada sección responde una pregunta de diseño y termina con una decisión concreta. Las cifras provienen del mismo ETL que alimenta el tablero; no se agregaron datos externos.
+    </div>
+    <div class="note-box">
+      <strong>Resumen en una frase.</strong> El tablero es <span class="red"><strong>táctico</strong></span>: ayuda a comparar la composición del catálogo por país, año, género y formato para orientar decisiones de planeación de contenido, no para operar la plataforma en tiempo real.
+    </div>
+  </div>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 03 · Audiencia
+# ------------------------------------------------------------------
+
+def audience(dashboard: dict) -> str:
+    k = dashboard["kpis"]
+    return page(
+        3,
+        "01 · Análisis de la audiencia",
+        f"""
+  {sec_head("01", "Análisis de la audiencia", "Para quién se construyó este tablero")}
+  <p class="lead">El tablero no está pensado para especialistas en estadística ni para operar Netflix. Está pensado para personas que necesitan <strong>entender la composición del catálogo y argumentar una decisión de contenido</strong> con cifras verificables. Por eso conviven tres profundidades: el titular, la comparación y el detalle.</p>
+
+  <div class="personas">
+    <article class="persona">
+      <span class="persona-letter">A</span>
+      <h3>Analista de catálogo y planeación de contenido</h3>
+      <p>Revisa qué produce Netflix, desde dónde y con qué mezcla de formatos antes de proponer ajustes o preguntas de investigación.</p>
+      <dl>
+        <div><dt>Decide</dt><dd>Qué país, género o formato conviene mirar con más atención y qué comparación vale la pena profundizar.</dd></div>
+        <div><dt>Detalle requerido</dt><dd>Alto: cifras exactas, filtros combinables y denominadores explícitos.</dd></div>
+      </dl>
+    </article>
+
+    <article class="persona">
+      <span class="persona-letter">B</span>
+      <h3>Docencia y coordinación académica</h3>
+      <p>Busca un caso real para enseñar visualización, lectura de datos y límites del análisis, sin tener que construir el ETL desde cero.</p>
+      <dl>
+        <div><dt>Decide</dt><dd>Qué evidencia llevar al aula, cómo explicar el método y qué límites discutir con el grupo.</dd></div>
+        <div><dt>Detalle requerido</dt><dd>Medio: definiciones claras, notas metodológicas y trazabilidad de cada cifra.</dd></div>
+      </dl>
+    </article>
+
+    <article class="persona">
+      <span class="persona-letter">C</span>
+      <h3>Público interesado y estudiantes</h3>
+      <p>Quiere formarse una idea del fenómeno sin leer una tabla de 8,807 filas ni conocer conceptos de estadística.</p>
+      <dl>
+        <div><dt>Decide</dt><dd>Si el tema le interesa, qué historia contar y qué explorar después por su cuenta.</dd></div>
+        <div><dt>Detalle requerido</dt><dd>Bajo: entrada narrativa, lenguaje cotidiano y ayudas breves por gráfica.</dd></div>
+      </dl>
+    </article>
+  </div>
+
+  <h3>Usuarios, decisiones y nivel de detalle</h3>
+  <table class="compact">
+    <thead>
+      <tr><th style="width:29%">Perfil</th><th style="width:27%">Decisiones que toma</th><th style="width:16%">Nivel de detalle</th><th>Cómo lo resuelve el tablero</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Analista de catálogo</strong></td>
+        <td>Priorizar mercados y géneros; detectar cambios de mezcla; comparar periodos.</td>
+        <td>Agregado, filtrable y con cifras exactas.</td>
+        <td>KPIs, mapa, rankings, series temporales y tablas con tooltips.</td>
+      </tr>
+      <tr>
+        <td><strong>Docencia</strong></td>
+        <td>Elegir evidencia; explicar el método; discutir alcances y sesgos.</td>
+        <td>Medio, con contexto metodológico.</td>
+        <td>Ayuda “cómo leer” en cada tarjeta, sección de método y notas de límites.</td>
+      </tr>
+      <tr>
+        <td><strong>Público general</strong></td>
+        <td>Entender la composición; decidir si el tema le interesa; explorar sin rumbo fijo.</td>
+        <td>Bajo, guiado y sin jerga.</td>
+        <td>Portada editorial, cuatro gestos de uso y hallazgos redactados en lenguaje claro.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:4mm">
+    <h4>Qué implica esta audiencia en el diseño</h4>
+    <p>La misma página debe permitir una lectura de <strong>treinta segundos</strong> (titular y KPIs), una de <strong>tres minutos</strong> (comparaciones y filtros) y una de <strong>quince minutos</strong> (tablas, ayuda y metodología). Esa convivencia explica la jerarquía editorial: primero el hallazgo, después la evidencia y al final el detalle. También explica lo que se dejó fuera: alertas en vivo, predicciones y microdatos por suscriptor, porque ninguna de las tres audiencias los necesita para tomar sus decisiones.</p>
+  </div>
+
+  <p class="tiny" style="margin-top:3mm">Cifras de referencia del catálogo completo: {fmt_int(k['total_titulos'])} títulos, {k['paises_distintos']} países y 42 géneros. La audiencia no requiere —ni el dataset permite— inferir ingresos o audiencia real.</p>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 04 · Objetivos
+# ------------------------------------------------------------------
+
+def objectives(dashboard: dict) -> str:
+    k = dashboard["kpis"]
+    return page(
+        4,
+        "02 · Definición de objetivos",
+        f"""
+  {sec_head("02", "Definición de objetivos", "Qué problema resuelve y qué decisión habilita")}
+  <p class="lead">El objetivo no es “mostrar datos de Netflix”, sino responder una pregunta acotada con evidencia reproducible: <strong>¿cómo se compone el catálogo y qué cambia cuando se mira por país, año, género y tipo de contenido?</strong></p>
+
+  <div class="chain">
+    <div class="chain-step"><span class="k">Situación</span><p>El catálogo creció rápido y se volvió global: {fmt_int(k['total_titulos'])} títulos de {k['paises_distintos']} países.</p></div>
+    <div class="chain-step"><span class="k">Problema</span><p>La conversación pública usa impresiones (“produce mucho”), no cifras comparables por mercado y periodo.</p></div>
+    <div class="chain-step"><span class="k">Pregunta</span><p>¿Qué mezcla de formatos, géneros y orígenes tiene el catálogo y cómo cambió entre 1925 y 2021?</p></div>
+    <div class="chain-step"><span class="k">Decisión</span><p>Orientar la exploración y priorizar preguntas de contenido; no operar la plataforma ni predecir audiencia.</p></div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="callout" style="margin-top:0">
+        <h4>Objetivo general</h4>
+        <p>Construir un tablero interactivo que permita <strong>explorar la composición y la evolución del catálogo de Netflix</strong> por tipo, país, año, género y clasificación, con un mismo denominador y con los límites del dataset explícitos.</p>
+      </div>
+      <h3 style="margin-top:4mm">Objetivos específicos</h3>
+      <ul class="objective-list">
+        <li data-n="1"><strong>Describir</strong> la composición del catálogo por tipo de contenido, género, país y clasificación de edad.</li>
+        <li data-n="2"><strong>Comparar</strong> periodos y mercados con filtros globales y un denominador consistente.</li>
+        <li data-n="3"><strong>Hacer visible el método</strong>: qué se limpió, qué se excluyó y qué no se puede afirmar.</li>
+        <li data-n="4"><strong>Permitir exploración autónoma</strong> sin perder trazabilidad entre la cifra y su cálculo.</li>
+      </ul>
+    </div>
+
+    <div class="example">
+      <span class="k">Ejemplo de uso</span>
+      <h3>“Quiero entender la mezcla antes de proponer un tema”</h3>
+      <p>Una coordinadora de contenido necesita argumentar si el catálogo es principalmente de películas o de series, y si esa mezcla cambia por región. Abre el tablero, revisa el titular y los KPIs: <strong>{fmt_pct(100 * k['peliculas'] / k['total_titulos'], 1)}</strong> son películas y <strong>{fmt_pct(k['porcentaje_series'], 1)}</strong> series.</p>
+      <p>Después filtra por tipo y por país. El contador de títulos y todas las gráficas se recalculan con la misma selección; el mapa deja de ser un adorno y se vuelve un selector. Si un país tiene pocos títulos, el tooltip y la tabla le dicen cuántos son y qué porcentaje representan, en lugar de dejar que el color sugiera una conclusión exagerada.</p>
+      <p>La decisión no es “qué país es mejor”, sino <strong>qué comparación merece profundizarse</strong> y con qué evidencia puede sostenerse.</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:4mm">Criterios de éxito del tablero</h3>
+  <table class="compact">
+    <thead><tr><th style="width:22%">Criterio</th><th style="width:40%">Meta</th><th>Cómo se verifica</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Cobertura</strong></td><td>Analizar el 100% del catálogo, sin muestreo.</td><td>{fmt_int(k['total_titulos'])} títulos en el JSON y en el ETL.</td></tr>
+      <tr><td><strong>Consistencia</strong></td><td>Un mismo filtro alimenta todas las vistas.</td><td>KPIs, mapa, tiempo, géneros y tipo comparten el conjunto filtrado.</td></tr>
+      <tr><td><strong>Legibilidad</strong></td><td>Funcionar en escritorio y en 390 px sin scroll horizontal de página.</td><td>Prueba de regresión en 1440 px y 390 px.</td></tr>
+      <tr><td><strong>Trazabilidad</strong></td><td>Poder explicar cada cifra y cada exclusión.</td><td><code>quality_report.json</code>, notas de método y ayuda por gráfica.</td></tr>
+      <tr><td><strong>Accesibilidad</strong></td><td>Ofrecer alternativas textuales y navegación por teclado.</td><td>Tablas equivalentes, <code>aria-label</code> y movimiento reducido.</td></tr>
+    </tbody>
+  </table>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 05 · Preprocesamiento · variables
+# ------------------------------------------------------------------
+
+def variables(quality: dict, dashboard: dict) -> str:
+    t = quality["totales"]
+    return page(
+        5,
+        "03 · Preprocesamiento",
+        f"""
+  {sec_head("03", "Preprocesamiento · identificación", "Qué variable hace qué en el tablero")}
+  <p class="lead">Antes de graficar se definió el papel de cada campo. No todos los datos sirven para lo mismo: unos identifican, otros describen dimensiones y unos pocos se convierten en métricas. Esta clasificación evita sumar unidades incompatibles o contar dos veces un título multivaluado.</p>
+
+  <table class="compact">
+    <thead>
+      <tr><th style="width:15%">Campo original</th><th style="width:13%">Tipo</th><th style="width:13%">Rol</th><th>Uso en el tablero</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>show_id</code></td><td>Identificador</td><td><span class="var-role id">Clave</span></td><td>Clave única de {fmt_int(t['titulos_unicos'])} títulos; 0 duplicados.</td></tr>
+      <tr><td><code>type</code></td><td>Categórico</td><td><span class="var-role dim">Dimensión</span></td><td>Película o serie; alimenta KPIs, dona y filtros.</td></tr>
+      <tr><td><code>title</code></td><td>Texto</td><td><span class="var-role">Contexto</span></td><td>Nombre visible en tablas y tooltips; no es clave.</td></tr>
+      <tr><td><code>director</code></td><td>Multivaluado</td><td><span class="var-role dim">Dimensión</span></td><td>Ranking de directores; {fmt_pct(quality['cobertura']['porcentaje_sin_director'])} sin dato, no se imputa.</td></tr>
+      <tr><td><code>cast</code></td><td>Multivaluado</td><td><span class="var-role">Contexto</span></td><td>Se conserva como contexto; no entra en indicadores.</td></tr>
+      <tr><td><code>country</code></td><td>Multivaluado</td><td><span class="var-role dim">Dimensión</span></td><td>Mapa, rankings y filtro por país o región.</td></tr>
+      <tr><td><code>date_added</code></td><td>Fecha</td><td><span class="var-role dim">Dimensión temporal</span></td><td>Año y mes de incorporación; 10 nulos.</td></tr>
+      <tr><td><code>release_year</code></td><td>Entero</td><td><span class="var-role dim">Dimensión temporal</span></td><td>Periodo de estreno y serie temporal.</td></tr>
+      <tr><td><code>rating</code></td><td>Categórico</td><td><span class="var-role dim">Dimensión</span></td><td>Clasificación de edad; 7 sin dato tras corregir 3 filas.</td></tr>
+      <tr><td><code>duration</code></td><td>Texto</td><td><span class="var-role met">Métrica / dimensión</span></td><td>Minutos para películas; temporadas para series. Nunca se promedian juntos.</td></tr>
+      <tr><td><code>listed_in</code></td><td>Multivaluado</td><td><span class="var-role dim">Dimensión</span></td><td>Hasta 3 géneros por título; 42 etiquetas distintas.</td></tr>
+      <tr><td><code>description</code></td><td>Texto</td><td><span class="var-role">Contexto</span></td><td>Sinopsis; no se usa en las visualizaciones.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="grid-2" style="margin-top:4.5mm">
+    <div>
+      <h3>Variables derivadas</h3>
+      <ul class="derived-list">
+        <li><span><code>added_year</code></span><span>Año de incorporación extraído de <code>date_added</code>.</span></li>
+        <li><span><code>added_month</code></span><span>Mes de incorporación para la lectura estacional.</span></li>
+        <li><span><code>duration_min</code></span><span>Minutos de película; nulo en series.</span></li>
+        <li><span><code>seasons</code></span><span>Temporadas de serie; nulo en películas.</span></li>
+        <li><span><code>primary_country</code></span><span>Primer país declarado; se usa para el filtro rápido.</span></li>
+        <li><span><code>region</code></span><span>Agrupación operativa en 6 regiones, propia del proyecto.</span></li>
+        <li><span><code>genres</code></span><span>Lista de géneros separada por comas y etiquetada en español.</span></li>
+        <li><span><code>has_director</code></span><span>Bandera para separar títulos con y sin director acreditado.</span></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Lo que el dataset no contiene</h3>
+      <div class="note-box">
+        <p><strong>No hay variables monetarias ni de audiencia.</strong> El archivo no incluye ingresos, precios, costo de producción, suscriptores, horas vistas ni calificaciones de usuarios. Por eso el tablero no calcula rentabilidad, participación de mercado ni “éxito”.</p>
+        <p style="margin-top:2mm"><strong>Consecuencia de diseño:</strong> todas las métricas son de <em>composición y conteo</em>. Cuando una vista necesita una unidad distinta (minutos frente a temporadas), se separa en lugar de inventar un promedio conjunto.</p>
+      </div>
+      <p class="tiny" style="margin-top:2.5mm">Fuente: Kaggle · shivamb/netflix-shows. Archivo <code>{quality['archivo']['nombre']}</code>, {quality['archivo']['bytes'] / 1_000_000:.1f} MB, {fmt_int(t['filas'])} filas y {t['columnas']} columnas.</p>
+    </div>
+  </div>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 06 · Preprocesamiento · limpieza y atípicos
+# ------------------------------------------------------------------
+
+def cleaning(quality: dict, dashboard: dict) -> str:
+    a = quality["anomalias"]
+    return page(
+        6,
+        "04 · Preprocesamiento",
+        f"""
+  {sec_head("04", "Preprocesamiento · limpieza", "Faltantes, duplicados y criterios de atípicos")}
+  <p class="lead">La limpieza se documenta antes de transformar. La regla general fue <strong>no inventar valores</strong>: cuando un dato falta, se reporta y se excluye solo de las vistas que lo requieren. Los casos extremos se marcan, pero no se borran, porque pueden ser legítimos.</p>
+
+  <h3>Valores faltantes y tratamiento</h3>
+  <table class="compact">
+    <thead><tr><th style="width:16%">Campo</th><th class="num" style="width:10%">Nulos</th><th class="num" style="width:9%">%</th><th>Tratamiento</th></tr></thead>
+    <tbody>
+      <tr><td><code>director</code></td><td class="num">2,634</td><td class="num">29.91%</td><td>No se imputa; se excluye del ranking de directores.</td></tr>
+      <tr><td><code>cast</code></td><td class="num">825</td><td class="num">9.37%</td><td>No se usa en indicadores; se conserva como contexto.</td></tr>
+      <tr><td><code>country</code></td><td class="num">831</td><td class="num">9.44%</td><td>Se excluye del mapa y rankings; permanece en los totales.</td></tr>
+      <tr><td><code>date_added</code></td><td class="num">10</td><td class="num">0.11%</td><td>Sin año de incorporación; no se imputa.</td></tr>
+      <tr><td><code>rating</code></td><td class="num">7</td><td class="num">0.08%</td><td>3 se recuperaron desde <code>duration</code>; el resto queda “Sin dato”.</td></tr>
+      <tr><td><code>duration</code></td><td class="num">3</td><td class="num">0.03%</td><td>Minutos recuperados desde <code>rating</code>; 0 títulos sin duración tras la corrección.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="grid-2" style="margin-top:4mm">
+    <div>
+      <h3>Duplicados y anomalías corregidas</h3>
+      <ul>
+        <li><strong>0 duplicados</strong> por <code>show_id</code> y 0 filas completas repetidas.</li>
+        <li>El título <em>Consequences</em> aparece dos veces con <code>show_id</code> distinto: no es un duplicado.</li>
+        <li><strong>3 filas</strong> tenían la duración en <code>rating</code> (s5542, s5795, s5814): 74, 84 y 66 minutos. Se movieron a <code>duration_min</code>; su rating queda desconocido.</li>
+        <li><strong>14 títulos</strong> registran incorporación anterior al estreno. Se conservan y se marcan; casi todos son series cuya <code>release_year</code> corresponde a la última temporada.</li>
+        <li><strong>2,038 elementos</strong> multivaluados tenían espacios extra; se aplicó <code>trim</code>.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Criterio de atípicos</h3>
+      <div class="note-box">
+        <p>Para películas se calcularon los cercos de Tukey sobre <code>duration_min</code>: <strong>Q1 = 87 min</strong>, <strong>Q3 = 114 min</strong>, <strong>IQR = 27 min</strong>. Los cercos quedan en <strong>46.5 y 154.5 minutos</strong>.</p>
+        <p style="margin-top:2mm">Para series se usó un criterio de dominio: <strong>más de 10 temporadas</strong> se marca para revisión, porque la mediana es 1 y el máximo es 17.</p>
+        <p style="margin-top:2mm"><strong>Decisión:</strong> los atípicos se conservan. Un cortometraje de 3 minutos o un documental de 312 minutos son formatos válidos, no errores. Se usan medianas e histogramas con intervalos para que los extremos no distorsionen la lectura.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="outlier-box" style="margin-top:3.5mm">
+    <div><span class="k">Películas fuera de cerco</span><strong>201</strong><p>3.3% de las 6,131 películas. Se marcan, no se eliminan.</p></div>
+    <div><span class="k">Rango observado</span><strong>3–312 min</strong><p>Solo 3 títulos superan los 240 minutos.</p></div>
+    <div><span class="k">Series con más de 10 temporadas</span><strong>10</strong><p>Se conservan; el máximo es 17 temporadas.</p></div>
+  </div>
+
+  <div class="callout" style="margin-top:3.5mm">
+    <h4>Por qué no se eliminan los extremos</h4>
+    <p>Eliminar los valores fuera de cerco habría borrado títulos reales del catálogo y habría inflado artificialmente la “normalidad”. El tablero prefiere mostrar la distribución completa y usar medidas robustas: la mediana de películas es <strong>98 minutos</strong> y el promedio, <strong>99.6 minutos</strong>. La diferencia es pequeña, pero el criterio queda explícito para cualquier filtro posterior.</p>
+  </div>
+
+  <p class="tiny" style="margin-top:3mm">Los conteos de atípicos se recalcularon sobre el JSON del tablero (6,131 películas y 2,676 series). El detalle de nulos y normalizaciones vive en <code>data/quality_report.json</code>.</p>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 07 · Preprocesamiento · integración
+# ------------------------------------------------------------------
+
+def integration(quality: dict) -> str:
+    m = quality["multivaluados"]
+    return page(
+        7,
+        "05 · Preprocesamiento",
+        f"""
+  {sec_head("05", "Preprocesamiento · integración", "Cómo se unieron las tablas sin inflar los totales")}
+  <p class="lead">El CSV original guarda varios países, géneros y directores en una sola celda. Para analizarlos sin contar dos veces el mismo título, el ETL separa esos valores en <strong>tablas puente</strong> y conserva una tabla central con una fila por título. Esa decisión es la que permite que el mapa y los rankings sean comparables.</p>
+
+  <div class="flow">
+    <div class="step"><b>01 · CSV crudo</b>{fmt_int(quality['totales']['filas'])} filas y {quality['totales']['columnas']} columnas tal como se descargan de Kaggle.</div>
+    <div class="step"><b>02 · Staging</b>DuckDB normaliza tipos, fechas, duración, países y géneros.</div>
+    <div class="step"><b>03 · Tablas</b><code>titles</code> más tablas puente de géneros, países, directores y reparto.</div>
+    <div class="step"><b>04 · Salidas</b>Parquet por tabla, base DuckDB y <code>quality_report.json</code>.</div>
+    <div class="step"><b>05 · Tablero</b><code>dashboard.json</code> compacto; React lo agrega en el navegador.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <h3>Tablas puente y cardinalidad</h3>
+      <table class="compact">
+        <thead><tr><th>Tabla</th><th>Granularidad</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td><code>titles</code></td><td>1 fila por <code>show_id</code></td><td>Base de KPIs, tiempo y tipo.</td></tr>
+          <tr><td><code>title_genres</code></td><td>1 fila por título–género</td><td>{m['generos_por_titulo']['min']}–{m['generos_por_titulo']['max']} géneros por título; nube y ranking.</td></tr>
+          <tr><td><code>title_countries</code></td><td>1 fila por título–país</td><td>{m['paises_por_titulo']['min']}–{m['paises_por_titulo']['max']} países por título; mapa y rankings.</td></tr>
+          <tr><td><code>title_directors</code></td><td>1 fila por título–director</td><td>Hasta {m['directores_por_titulo']['max']} directores; ranking.</td></tr>
+          <tr><td><code>title_cast</code></td><td>1 fila por título–actor</td><td>Contexto; no entra en indicadores.</td></tr>
+        </tbody>
+      </table>
+      <p class="tiny" style="margin-top:2mm">Un título puede declarar hasta 12 países. La suma por país supera el total del catálogo; el denominador de los porcentajes sigue siendo el total de títulos.</p>
+    </div>
+
+    <div>
+      <h3>Reglas de integración</h3>
+      <ul>
+        <li><strong>Países históricos.</strong> West Germany y East Germany se agrupan en Germany; Soviet Union en Russia. Resultado: 119 países distintos.</li>
+        <li><strong>País principal.</strong> El primer país declarado se marca como <code>primary_country</code> para el filtro rápido, sin perder la lista completa.</li>
+        <li><strong>Géneros.</strong> Se conserva el nombre original en inglés y se agrega una etiqueta en español solo para la interfaz.</li>
+        <li><strong>Regiones.</strong> La agrupación en 6 regiones es una clasificación operativa propia, no una norma de Netflix.</li>
+        <li><strong>Denominadores.</strong> Los porcentajes de género y país usan el total de títulos del filtro; por eso pueden sumar más de 100%.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:3.5mm">
+    <h4>La prueba de que la integración funciona</h4>
+    <p>El total del catálogo se mantiene en <strong>{fmt_int(quality['totales']['titulos_unicos'])} títulos</strong> aunque un título declare varios países o géneros. Si se hubiera hecho un <em>join</em> directo sobre el CSV, cada título con 12 países habría aparecido 12 veces en los KPIs. Las tablas puente permiten contar títulos distintos y, al mismo tiempo, responder “cuántos títulos tienen este género” o “cuántos declaran este país”.</p>
+  </div>
+
+  <div class="note-box" style="margin-top:3mm">
+    <strong>Integración externa.</strong> Solo se añadieron dos catálogos de apoyo, versionados en el repositorio: <code>country_meta.json</code> (nombre en español y región) y <code>genre_labels.json</code> (traducción de géneros). No se incorporaron cifras de audiencia, ingresos ni datos de terceros.
+  </div>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 08 · Selección del tipo de dashboard
+# ------------------------------------------------------------------
+
+def dashboard_types() -> str:
+    return page(
+        8,
+        "06 · Selección del tipo de dashboard",
+        f"""
+  {sec_head("06", "Selección del tipo de dashboard", "Operativo, táctico o estratégico")}
+  <p class="lead">No existe un tipo de tablero mejor en abstracto. La elección depende del <strong>horizonte de la decisión</strong>, del usuario y del nivel de detalle que la pregunta exige. Comparar los tres tipos permite justificar por qué este proyecto no es un panel de monitoreo ni un cuadro de mando ejecutivo.</p>
+
+  <table class="compare">
+    <thead>
+      <tr>
+        <th style="width:17%">Criterio</th>
+        <th style="width:26%">Operativo</th>
+        <th class="chosen" style="width:31%">Táctico · elegido</th>
+        <th style="width:26%">Estratégico</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="rowlabel">Horizonte</td><td>Minutos u horas.</td><td class="chosen">Semanas o trimestres.</td><td>Años.</td></tr>
+      <tr><td class="rowlabel">Usuario típico</td><td>Operación y soporte.</td><td class="chosen">Analista, coordinación de contenido, docencia.</td><td>Dirección general.</td></tr>
+      <tr><td class="rowlabel">Pregunta</td><td>¿Qué está pasando ahora?</td><td class="chosen">¿Cómo se compara y qué conviene priorizar?</td><td>¿Hacia dónde vamos?</td></tr>
+      <tr><td class="rowlabel">Granularidad</td><td>Evento o registro individual.</td><td class="chosen">Agregado filtrable por país, año, género y tipo.</td><td>Unos pocos indicadores globales.</td></tr>
+      <tr><td class="rowlabel">Frecuencia</td><td>Tiempo real o casi real.</td><td class="chosen">Actualización periódica por snapshot.</td><td>Anual o por ciclo estratégico.</td></tr>
+      <tr><td class="rowlabel">Acción que habilita</td><td>Corregir una falla o atender una alerta.</td><td class="chosen">Orientar exploración y planeación de contenido.</td><td>Definir prioridades y metas de largo plazo.</td></tr>
+      <tr><td class="rowlabel">Ejemplo</td><td>Cola de incidentes o tráfico en vivo.</td><td class="chosen">Mezcla de catálogo por mercado y periodo.</td><td>Participación de mercado a cinco años.</td></tr>
+      <tr><td class="rowlabel">Ajuste al proyecto</td><td>No: el dataset es un corte histórico.</td><td class="chosen"><strong>Alto: compara, filtra y explica.</strong></td><td>Parcial: útil para el marco, insuficiente para el detalle.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="type-cards">
+    <article class="type-card">
+      <h4>Operativo</h4>
+      <p>Sirve para vigilar y reaccionar. Necesita eventos recientes, alertas y latencia baja. El dataset de Netflix es un snapshot cerrado en 2021: no hay eventos ni estado actual que monitorear.</p>
+    </article>
+    <article class="type-card is-chosen">
+      <h4>Táctico <span class="tag red">Elegido</span></h4>
+      <p>Sirve para comparar, priorizar y sostener una conversación de planeación. Tolera agregación y actualización periódica, pero exige filtros y detalle suficiente para argumentar.</p>
+    </article>
+    <article class="type-card">
+      <h4>Estratégico</h4>
+      <p>Sirve para dirigir. Reduce la realidad a pocos indicadores de largo plazo. Es útil como marco, pero escondería la comparación por país, género y formato que este proyecto necesita.</p>
+    </article>
+  </div>
+
+  <div class="callout" style="margin-top:3.5mm">
+    <h4>Lectura de la comparación</h4>
+    <p>El proyecto no necesita tiempo real, pero tampoco puede quedarse en tres cifras de portada. Su unidad de decisión es la <strong>comparación</strong>: un país frente a otro, un periodo frente a otro, un género frente a otro. Esa es la definición práctica de un tablero táctico.</p>
+  </div>
+
+  <div class="note-box" style="margin-top:3.5mm">
+    <strong>Regla de decisión.</strong> Si la pregunta empieza con “¿qué está pasando ahora?”, el tablero debería ser operativo. Si empieza con “¿qué priorizamos este trimestre?”, es táctico. Si empieza con “¿dónde queremos estar en cinco años?”, es estratégico. La pregunta de este proyecto —“¿cómo se compara la mezcla del catálogo?”— pertenece al segundo caso.
+  </div>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 09 · Justificación
+# ------------------------------------------------------------------
+
+def justification(dashboard: dict) -> str:
+    k = dashboard["kpis"]
+    return page(
+        9,
+        "07 · Justificación del tipo elegido",
+        f"""
+  {sec_head("07", "Justificación", "Por qué el tablero es táctico")}
+  <p class="lead">La elección no se apoya en una preferencia estética, sino en cuatro rasgos del problema: el horizonte de la decisión, el nivel de detalle, el gesto central de comparación y la frecuencia de actualización. Los cuatro apuntan al mismo tipo.</p>
+
+  <div class="reasons">
+    <div class="reason"><span class="n">1</span><div><h3>La decisión ocurre en el mediano plazo</h3><p>No se trata de atender una alerta ni de fijar la estrategia a cinco años, sino de decidir qué mirar y qué priorizar en la siguiente conversación de contenido.</p></div></div>
+    <div class="reason"><span class="n">2</span><div><h3>El detalle es agregado, pero filtrable</h3><p>El usuario no necesita el registro individual, pero sí cortes por país, año, género y tipo. Un tablero estratégico de tres cifras no alcanzaría.</p></div></div>
+    <div class="reason"><span class="n">3</span><div><h3>La comparación es el gesto central</h3><p>El valor está en contrastar mercados, periodos y mezclas. Esa operación es táctica: busca entender una situación para orientar una acción, no solo vigilarla.</p></div></div>
+    <div class="reason"><span class="n">4</span><div><h3>La actualización es por snapshot</h3><p>El corte es el 25 de septiembre de 2021. No hay flujo en vivo ni eventos; exigir tiempo real sería incompatible con la fuente.</p></div></div>
+  </div>
+
+  <div class="contrast">
+    <div class="card">
+      <h4>Por qué no operativo</h4>
+      <p>Un tablero operativo responde “qué está pasando ahora” y dispara acciones inmediatas. Aquí no hay ahora: el dataset es histórico y está cerrado. Tampoco hay alertas, colas ni estados que corregir. Forzar ese tipo habría producido un panel con fecha falsa de actualidad.</p>
+    </div>
+    <div class="card">
+      <h4>Por qué no solo estratégico</h4>
+      <p>Un tablero estratégico resume en pocos indicadores de largo plazo. Ese resumen sería útil para un director, pero insuficiente para la audiencia definida: sin filtros por país, género y formato no se puede argumentar una comparación ni explicar una mezcla.</p>
+    </div>
+  </div>
+
+  <h3>Cómo se traduce el tipo táctico en decisiones de interfaz</h3>
+  <table class="compact">
+    <thead><tr><th style="width:32%">Rasgo táctico</th><th>Decisión concreta en el tablero</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Comparar</strong></td><td>Filtros globales de tipo, periodo y país; rankings y series temporales con el mismo denominador.</td></tr>
+      <tr><td><strong>Priorizar</strong></td><td>KPIs en una franja horizontal y hallazgos redactados al inicio, para que la primera lectura sea accionable.</td></tr>
+      <tr><td><strong>Argumentar</strong></td><td>Cifras exactas en tooltips y tablas; ayuda “cómo leer” en cada gráfica; notas de límites visibles.</td></tr>
+      <tr><td><strong>Explorar sin perderse</strong></td><td>Riel de secciones, mapa como selector y botón “Limpiar” que devuelve el panorama completo.</td></tr>
+      <tr><td><strong>Actualización periódica</strong></td><td>El corte del snapshot se muestra en la portada y en el pie; no se simula tiempo real.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:3.5mm">
+    <h4>Qué se descartó y por qué</h4>
+    <p>Se descartaron <strong>alertas en vivo</strong> (no hay eventos), <strong>predicciones</strong> (el dataset no tiene serie suficiente ni variable objetivo) y <strong>scoring de títulos</strong> (no hay audiencia ni ingresos para entrenar o validar). Incluirlos habría dado apariencia de sofisticación a un tablero que no puede sostener esas afirmaciones. El alcance táctico es, aquí, una decisión de honestidad analítica: {fmt_int(k['total_titulos'])} títulos describen composición, no éxito.</p>
+  </div>
+
+  <div class="quote">
+    “Un tablero táctico no promete predecir el futuro: ordena el presente para decidir qué mirar después.”
+    <span>{BRAND} · Criterio de diseño</span>
+  </div>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 10 · El tablero
+# ------------------------------------------------------------------
+
+def board(dashboard: dict) -> str:
+    k = dashboard["kpis"]
+    return page(
+        10,
+        "08 · El tablero",
+        f"""
+  {sec_head("08", "Evidencia visual", "El tablero en pantalla")}
+  <p class="lead">La portada y el panel de indicadores muestran la jerarquía completa: primero el tema y la ficha técnica, después las cifras que responden al filtro. La vista corresponde al catálogo completo, sin filtros activos.</p>
+
+  <figure class="fig-150">
+    <img src="img/desktop-01-inicio.png" alt="Portada del tablero Catálogo en foco: titular editorial, ficha técnica con 8,807 títulos y franja de indicadores.">
+    <figcaption><b>Portada.</b> Titular, ficha técnica del dataset y franja de cuatro cifras. El diseño editorial separa la lectura narrativa de la lectura de datos.</figcaption>
+  </figure>
+
+  <div class="grid-2" style="margin-top:4mm">
+    <div>
+      <h3>Qué se ve en el panel</h3>
+      <ul>
+        <li><strong>Seis indicadores</strong> que se recalculan con el filtro global: títulos, películas, series, países, año con más estrenos y mediana de duración.</li>
+        <li><strong>Franja horizontal</strong> en lugar de tarjetas aisladas: las cifras se leen como una sola oración, no como seis adornos.</li>
+        <li><strong>Filtros persistentes</strong> de tipo, periodo y país o región; el contador confirma cuántos títulos quedan.</li>
+        <li><strong>Riel de secciones</strong> que mantiene el contexto y permite saltar entre mapa, tiempo, géneros y tipos.</li>
+      </ul>
+      <div class="note-box" style="margin-top:2.5mm">
+        <strong>Lectura de la vista:</strong> {fmt_int(k['peliculas'])} películas ({fmt_pct(100 * k['peliculas'] / k['total_titulos'], 1)}) y {fmt_int(k['series'])} series ({fmt_pct(k['porcentaje_series'], 1)}). El año con más estrenos es {k['anio_mas_estrenos']['year']} y la mediana de películas es {k['duracion_peliculas']['mediana_min']:.0f} minutos.
+      </div>
+    </div>
+
+    <figure>
+      <img src="img/desktop-02-panorama.png" alt="Franja de indicadores del tablero con seis cifras: títulos, películas, series, países, año y mediana de duración.">
+      <figcaption><b>Panel de indicadores.</b> La franja usa el mismo denominador que el resto de las vistas; al filtrar, todas las cifras cambian juntas.</figcaption>
+    </figure>
+  </div>
+
+  <div class="callout" style="margin-top:4mm">
+    <h4>Qué debe notar la audiencia en los primeros treinta segundos</h4>
+    <p>Que el catálogo es mayoritariamente de películas, que Estados Unidos concentra <strong>{fmt_pct(k['top5_paises'][0]['share'], 1)}</strong> de los títulos y que <strong>{fmt_pct(k['ultimos_5_anios']['porcentaje'])}</strong> se incorporó entre 2017 y 2021. Esas tres ideas son el titular; el resto del tablero existe para verificarlas, matizarlas o refutarlas con filtros.</p>
+  </div>
+
+  <p class="tiny" style="margin-top:3mm">La versión de 390 px conserva la misma jerarquía y no genera scroll horizontal de página; las tablas y matrices hacen scroll dentro de su propio contenedor. La prueba de regresión se documenta en el cierre.</p>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 11 · Visualizaciones
+# ------------------------------------------------------------------
+
+def visualizations(dashboard: dict) -> str:
+    k = dashboard["kpis"]
+    return page(
+        11,
+        "09 · Visualizaciones y lectura",
+        f"""
+  {sec_head("09", "Visualizaciones", "Tres lecturas: geografía, tiempo y género")}
+  <p class="lead">Cada visualización responde una pregunta distinta y declara su propia unidad. El mapa compara países; la serie temporal separa estreno de incorporación; la nube y el ranking ordenan géneros. Ninguna vista intenta responderlo todo.</p>
+
+  <figure class="fig-110">
+    <img src="img/pdf-mapa.png" alt="Mapa mundial coroplético de títulos por país, con escala secuencial y ranking lateral.">
+    <figcaption><b>Geografía.</b> El color indica cuántos títulos declaran ese país. La escala usa cuantiles para que los países con pocos títulos sigan siendo visibles frente a Estados Unidos.</figcaption>
+  </figure>
+
+  <div class="grid-2" style="margin-top:4mm">
+    <figure style="width:74mm;margin:0 auto">
+      <img src="img/pdf-tiempo.png" alt="Serie temporal de estrenos e incorporaciones por año, con pico de estrenos en 2018 y de incorporaciones en 2019.">
+      <figcaption><b>Tiempo.</b> Dos relojes: <code>release_year</code> y <code>date_added</code>. La línea punteada marca el corte del snapshot.</figcaption>
+    </figure>
+    <figure style="width:74mm;margin:0 auto">
+      <img src="img/pdf-generos.png" alt="Nube de palabras y ranking de géneros, liderados por Películas internacionales y Dramas.">
+      <figcaption><b>Géneros.</b> La nube sugiere jerarquía; el ranking y la lista accesible permiten comparar con cifras exactas.</figcaption>
+    </figure>
+  </div>
+
+  <div class="grid-3" style="margin-top:3.5mm">
+    <div class="note-box"><strong>Mapa.</strong> {fmt_int(k['top5_paises'][0]['count'])} títulos en Estados Unidos ({fmt_pct(k['top5_paises'][0]['share'], 1)}), {fmt_int(k['top5_paises'][1]['count'])} en India y {fmt_int(k['top5_paises'][2]['count'])} en Reino Unido. Un título puede sumar en varios países.</div>
+    <div class="note-box"><strong>Tiempo.</strong> Pico de estrenos en {k['anio_mas_estrenos']['year']} ({fmt_int(k['anio_mas_estrenos']['count'])}) y de incorporaciones en {k['anio_mas_incorporaciones']['year']} ({fmt_int(k['anio_mas_incorporaciones']['count'])}). 2021 está incompleto.</div>
+    <div class="note-box"><strong>Géneros.</strong> “{k['top5_generos'][0]['name']}” lidera con {fmt_int(k['top5_generos'][0]['count'])} títulos ({fmt_pct(k['top5_generos'][0]['share'])}), seguido por “{k['top5_generos'][1]['name']}” ({fmt_int(k['top5_generos'][1]['count'])}).</div>
+  </div>
+
+  <div class="callout" style="margin-top:3mm">
+    <h4>Una regla común a las tres vistas</h4>
+    <p>El color y el tamaño nunca codifican dos variables a la vez sin explicarlo. El mapa usa color para conteo; la serie temporal distingue estreno e incorporación con trazo y leyenda; la nube usa tamaño para frecuencia y una lista ordenada como alternativa. Esa disciplina evita que la lectura rápida y la detallada se contradigan.</p>
+  </div>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# 12 · Cierre
+# ------------------------------------------------------------------
+
+def closing(dashboard: dict) -> str:
+    k = dashboard["kpis"]
+    return page(
+        12,
+        "10 · Cierre",
+        f"""
+  {sec_head("10", "Cierre", "Alcance, reproducibilidad y conclusiones")}
+  <p class="lead">El tablero describe composición y evolución del catálogo; no mide audiencia, ingresos ni éxito. Esa frontera no es una limitación accidental: es la condición que hace que las cifras sean defendibles.</p>
+
+  <div class="grid-2">
+    <div>
+      <h3>Límites del análisis</h3>
+      <ul>
+        <li><strong>Snapshot:</strong> el catálogo termina el 25 de septiembre de 2021; 2021 está incompleto.</li>
+        <li><strong>Sin dinero:</strong> no hay ingresos, precios, costo ni audiencia. No se estiman.</li>
+        <li><strong>País multivaluado:</strong> un título puede sumar en varios países; los totales por país no suman el catálogo.</li>
+        <li><strong>Datos faltantes:</strong> 29.91% sin director y {fmt_pct(k['sin_pais']['porcentaje'])} sin país; no se imputan.</li>
+        <li><strong>Regiones:</strong> la agrupación en 6 regiones es operativa, no una norma de Netflix.</li>
+        <li><strong>Correlación no es causalidad:</strong> el tablero describe, no explica por qué Netflix tomó cada decisión.</li>
+      </ul>
+      <h3 style="margin-top:4mm">Pruebas de regresión</h3>
+      <table class="compact">
+        <thead><tr><th>Prueba</th><th>Resultado</th></tr></thead>
+        <tbody>
+          <tr><td>Compilación TypeScript y build</td><td>Correcto</td></tr>
+          <tr><td>Carga de <code>dashboard.json</code></td><td>Sin errores de consola</td></tr>
+          <tr><td>Filtros globales</td><td>Mismo conjunto en todas las vistas</td></tr>
+          <tr><td>1440 px y 390 px</td><td>Sin scroll horizontal de página</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <h3>Cómo reproducirlo</h3>
+      <div class="commands">
+        <div><b># 1.</b> python etl/build_dataset.py</div>
+        <div><b># 2.</b> npm install</div>
+        <div><b># 3.</b> npm run dev</div>
+        <div><b># 4.</b> npm run build</div>
+        <div><b># 5.</b> npm run pdf</div>
+      </div>
+      <p class="tiny" style="margin-top:2mm">El ETL requiere Python 3.10+ y DuckDB. El tablero requiere Node.js 20+ y Vite. El PDF se imprime con Chrome headless.</p>
+
+      <h3 style="margin-top:4mm">Referencias</h3>
+      <p class="small">Shivam Bansal. <em>Netflix Movies and TV Shows</em>. Kaggle, 2021. https://www.kaggle.com/datasets/shivamb/netflix-shows · DuckDB Foundation. <em>DuckDB documentation</em>. https://duckdb.org/docs/ · Recharts. https://recharts.org/ · React. https://react.dev/ · Vite. https://vite.dev/</p>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:4mm">
+    <h4>Conclusiones</h4>
+    <p><strong>1. El catálogo es global, pero concentrado.</strong> Estados Unidos reúne {fmt_pct(k['top5_paises'][0]['share'], 1)} de los títulos; India y Reino Unido completan el podio. La producción declarada se reparte en {k['paises_distintos']} países, con un vacío de {fmt_int(k['sin_pais']['titulos'])} títulos sin país.</p>
+    <p><strong>2. La expansión reciente es el fenómeno temporal dominante.</strong> {fmt_pct(k['ultimos_5_anios']['porcentaje'])} del catálogo se incorporó entre 2017 y 2021, con pico en {k['anio_mas_incorporaciones']['year']}. El pico de estrenos, en {k['anio_mas_estrenos']['year']}, muestra que estreno y llegada al catálogo no coinciden.</p>
+    <p><strong>3. La mezcla importa más que una sola cifra.</strong> {fmt_pct(100 * k['peliculas'] / k['total_titulos'], 1)} son películas y {fmt_pct(k['porcentaje_series'], 1)} series; “{k['top5_generos'][0]['name']}” y “{k['top5_generos'][1]['name']}” lideran los géneros. Leer solo el total escondería esa diversidad.</p>
+  </div>
+
+  <div class="note-box" style="margin-top:3mm">
+    <strong>Entregables.</strong> Tablero en <code>src/</code> · ETL en <code>etl/build_dataset.py</code> · datos en <code>public/data/dashboard.json</code> · reporte de calidad en <code>data/quality_report.json</code> · este informe en <code>docs/Justificacion_Fase1.pdf</code>.
+  </div>
+""",
+    )
+
+
+# ------------------------------------------------------------------
+# Ensamblado
+# ------------------------------------------------------------------
+
+def build_html(quality: dict, dashboard: dict) -> str:
+    pages = [
+        cover(dashboard),
+        index_page(),
+        audience(dashboard),
+        objectives(dashboard),
+        variables(quality, dashboard),
+        cleaning(quality, dashboard),
+        integration(quality),
+        dashboard_types(),
+        justification(dashboard),
+        board(dashboard),
+        visualizations(dashboard),
+        closing(dashboard),
+    ]
+    return f"""<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>{BRAND} · Informe de diseño y justificación</title>
+<style>{CSS}</style>
+</head>
+<body>
+{''.join(pages)}
+</body>
+</html>
+"""
+
+
+def main() -> None:
+    quality, dashboard = load()
+    DOCS.mkdir(parents=True, exist_ok=True)
+    PUBLIC_DOCS.mkdir(parents=True, exist_ok=True)
+    HTML.write_text(build_html(quality, dashboard), encoding="utf-8")
+
+    chrome = find_chrome()
+    command = [
+        chrome,
+        "--headless=new",
+        "--disable-gpu",
+        "--no-pdf-header-footer",
+        "--run-all-compositor-stages-before-draw",
+        "--virtual-time-budget=12000",
+        f"--print-to-pdf={PDF}",
+        HTML.as_uri(),
+    ]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0 or not PDF.exists():
+        raise SystemExit(f"Chrome no pudo generar el PDF.\n{result.stderr}")
+
+    shutil.copy2(PDF, PUBLIC_DOCS / PDF.name)
+    print(f"HTML: {HTML.relative_to(ROOT)}")
+    print(f"PDF:  {PDF.relative_to(ROOT)} ({PDF.stat().st_size / 1024:.0f} KB)")
+    print(f"Copia: {(PUBLIC_DOCS / PDF.name).relative_to(ROOT)}")
+
+
+if __name__ == "__main__":
+    main()

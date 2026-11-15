@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Catálogo en foco">
+  <rect width="64" height="64" rx="6" fill="#fbf9f5"/>
+  <rect x="11" y="11" width="42" height="42" fill="#d90429"/>
+  <rect x="24" y="24" width="16" height="16" fill="none" stroke="#fbf9f5" stroke-width="4"/>
+</svg>
