@@ -277,28 +277,6 @@ a {
   flex-shrink: 0;
 }
 
-.pdf-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border: 1px solid var(--ink);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--ink);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: background 0.16s ease, color 0.16s ease;
-}
-
-.pdf-link:hover {
-  background: var(--ink);
-  color: var(--paper);
-}
-
 .menu-btn {
   display: none;
   align-items: center;

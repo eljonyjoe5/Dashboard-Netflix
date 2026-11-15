@@ -55,9 +55,6 @@ export function Header({ active, progress, pdfHref }: { active: string; progress
           </nav>
 
           <div className="header-actions">
-            <a className="pdf-link" href={pdfHref} target="_blank" rel="noreferrer">
-              <span aria-hidden="true">↓</span> PDF
-            </a>
             <button
               type="button"
               className="menu-btn"
